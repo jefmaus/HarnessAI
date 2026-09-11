@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Hook determinista pre-commit: barrera física infranqueable de calidad y seguridad
+set -e
+
+echo "🔍 [Pre-Commit] Verificando archivos sensibles y credenciales en staging..."
+if git diff --cached --name-only | grep -E "(\.env|\.pem|\.key|id_rsa)$"; then
+    echo "❌ [Pre-Commit] ERROR: Intento de commitear archivos sensibles o claves privadas detectado."
+    exit 1
+fi
+
+echo "🧪 [Pre-Commit] Ejecutando suite de verificación universal (harness/scripts/verify.py)..."
+
+if command -v python3 >/dev/null 2>&1; then
+    PY_BIN="python3"
+elif command -v python >/dev/null 2>&1; then
+    PY_BIN="python"
+else
+    echo "❌ [Pre-Commit] ERROR: Intérprete de Python no disponible en PATH para ejecutar verify.py."
+    exit 1
+fi
+
+"$PY_BIN" harness/scripts/verify.py
+
+echo "✅ [Pre-Commit] Verificación completada con éxito. Procediendo con el commit."
+exit 0
