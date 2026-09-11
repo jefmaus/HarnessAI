@@ -48,7 +48,7 @@ flowchart TD
     %% 2. Activación
     subgraph F2 ["Fase 2: Planificación y Activación"]
         A1["Mover carpeta a harness/specs/active/XXX-slug/"] --> A2["Regla física: Solo 1 feature activa a la vez"]
-        A2 --> A3["Desglosar de 5 a 8 micro-tareas en harness/specs/tasks.md"]
+        A2 --> A3["Desglosar micro-tareas atómicas en harness/specs/tasks.md"]
     end
 
     %% 3. Ciclo de Tareas y Calidad
@@ -108,11 +108,11 @@ El sistema utiliza el principio de **foco de contexto único**: el modelo no deb
 
 | Ruta | Propósito Operativo |
 | :--- | :--- |
-| **`harness/specs/TEMPLATE.md`** | **Protocolo de co-creación y plantilla universal.** Establece el procedimiento de 5 pasos para que el agente calcule de forma autónoma el siguiente ID disponible (`001`, `002`...), asigne el módulo afectado y su estrategia de pruebas, defina contratos técnicos (APIs REST, CLIs, librerías o componentes UI) y redacte Criterios de Aceptación inmutables (`CA-1`, `CA-2`...). |
+| **`harness/specs/TEMPLATE.md`** | **Protocolo de co-creación y plantilla universal.** Establece el procedimiento interactivo de 6 pasos para que el agente calcule de forma autónoma el siguiente ID disponible (`001`, `002`...), asigne módulos y estrategias de test, y defina contratos técnicos o invariantes adaptados a cualquier tipo de trabajo (APIs REST, UIs, Crons/Batch, Colas/Workers, Bugfixes, Refactors, Migraciones DB, CLIs o Librerías) junto con sus Criterios de Aceptación inmutables (`CA-*`). |
 | **`harness/specs/backlog/`** | **Cola de espera.** Almacena especificaciones planificadas pero no iniciadas. El agente tiene prohibido leer o modificar archivos aquí durante el desarrollo diario. |
 | **`harness/specs/active/`** | **Zona de trabajo activo.** **Solo puede existir una carpeta de feature a la vez** (ej. `001-login/spec.md`). Esta restricción física evita la dispersión de tokens y el desenfoque del modelo. |
 | **`harness/specs/done/`** | **Historial inmutable.** Archivo histórico de funcionalidades finalizadas que ya cuentan con pruebas unitarias y código de producción verificado. |
-| **`harness/specs/tasks.md`** | **Buffer de ejecución inmediata.** Contiene el desglose de 5 a 8 micro-tareas de la feature activa, con sus estados: `[ ]` (pendiente), `[-]` (en progreso) y `[x]` (completada). |
+| **`harness/specs/tasks.md`** | **Buffer de ejecución inmediata.** Contiene el desglose de micro-tareas atómicas de la feature activa (típicamente de 3 a 12 según complejidad), con sus estados: `[ ]` (pendiente), `[-]` (en progreso) y `[x]` (completada). |
 
 ---
 
@@ -170,7 +170,7 @@ Git no rastrea directorios vacíos. Para garantizar que la arquitectura de carpe
 
 ### 3. Iniciar el desarrollo (Foco Único):
 * Mueve la carpeta de `harness/specs/backlog/001-<nombre>/` a `harness/specs/active/001-<nombre>/`.
-* El agente volcará las 5 a 8 micro-tareas en `harness/specs/tasks.md`.
+* El agente volcará las micro-tareas atómicas en `harness/specs/tasks.md`.
 
 ### 4. Desarrollar con TDD Adaptativo:
 * El agente toma la micro-tarea y la marca con `[-]` en `tasks.md`.

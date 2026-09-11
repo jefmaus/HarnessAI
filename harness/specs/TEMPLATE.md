@@ -1,74 +1,97 @@
 # Guía y Plantilla Universal de Especificaciones (Specs)
 
-Este documento define el protocolo interactivo que el agente debe seguir para co-crear una nueva funcionalidad con el desarrollador, junto con la plantilla obligatoria para el archivo `spec.md`. Es compatible con arquitecturas monolíticas, microservicios, monorepos, CLIs, librerías y aplicaciones frontend.
+Este documento define el protocolo interactivo que el agente debe seguir para co-crear cualquier especificación con el desarrollador, junto con la plantilla universal para el archivo `spec.md`. Es compatible con cualquier tipo de proyecto (monolitos, microservicios, monorepos, CLIs, librerías, frontends, APIs) y cualquier tipo de trabajo de ingeniería (features nuevas, corrección de bugs, tareas batch/cron, colas de mensajería, refactors y migraciones).
 
 ---
 
-## PARTE 1: Protocolo de Co-Creación (5 Pasos Obligatorios)
+## PARTE 1: Protocolo de Co-Creación Interactivo (6 Pasos y 1 Checkpoint Obligatorio)
 
-Antes de generar el archivo, el agente asume el rol de arquitecto de software y ejecuta estos pasos en orden:
+Antes de generar cualquier archivo, el agente asume el rol de arquitecto de software y ejecuta estos pasos conversacionales en orden estricto:
 
 ### Paso 1: Cálculo Autónomo del Siguiente ID (Sin preguntar al usuario)
 El agente calcula el número de forma autónoma:
 1. Inspecciona los nombres de carpetas en `harness/specs/backlog/`, `harness/specs/active/` y `harness/specs/done/`.
-2. Identifica el número de prefijo más alto existente (ej. si existe `014-login-lock`, el mayor es 14).
+2. Identifica el número de prefijo más alto existente (ej. si existe `014-user-profile`, el mayor es 14).
 3. Suma +1 y formatea el nuevo ID a 3 dígitos con ceros a la izquierda (ej. `015`). Si no hay carpetas previas, inicia en `001`.
 
 ### Paso 2: Asignación de Módulo / Servicio y Estrategia de Tests
-El agente consulta la topología registrada en `AGENTS.md` o `harness/config.json` y acuerda:
-1. **Módulo Objetivo:** ¿A qué servicio o componente aplica la feature? (Ej: `backend/auth`, `backend/billing`, `frontend`, o `global`).
+El agente consulta la topología registrada en `AGENTS.md` o `harness/config.json` y acuerda con el usuario:
+1. **Módulo(s) Objetivo:** ¿A qué servicio(s) o componente(s) aplica la spec? (Ej: `core`, `api`, `frontend`, o combinación en monorepos).
 2. **Estrategia de Tests:**
-   * **Dedicada:** Tests en una carpeta específica (ej: `services/auth/tests/` o `src/test/java`).
-   * **Colocalizada:** Tests adyacentes al código fuente (ej: Angular `*.spec.ts`, React `*.test.tsx`, Go `*_test.go`).
-   * **Ninguna / Omitida:** Declarada explícitamente para módulos visuales o prototipos sin suite automatizada.
+   * **Dedicada:** Tests en una carpeta específica (ej: `<modulo>/tests/` o `tests/unit/`).
+   * **Colocalizada:** Tests adyacentes al código fuente (ej: `*.spec.ts`, `*_test.go`).
+   * **Ninguna / Omitida:** Solo si se declara formalmente para prototipos o maquetación sin suite automatizada.
 
-### Paso 3: Nombre de la Feature, Slug y Reglas de Negocio
-El agente pregunta al usuario:
-1. **Nombre y Slug:** "¿Cómo se llamará la feature? (Propongo el slug `XXX-<nombre-corto>`, ¿te parece bien o prefieres otro?)".
-2. **Propósito:** ¿Cuál es el objetivo exacto de la funcionalidad?
-3. **Reglas duras:** ¿Qué restricciones de negocio aplican? (Límites, validaciones, expiración, estados válidos).
-4. **Precondiciones:** ¿Qué estado previo requiere el sistema antes de ejecutar la acción?
+### Paso 3: Diálogo de Alcance y Requisitos (Adaptativo según el Tipo de Tarea)
+El agente **NO asume ni inventa** reglas ni alcance por su cuenta. Identifica el tipo de tarea y entrevista al desarrollador en el chat:
+1. **Nombre y Slug propuesto:** Sugiere el formato `XXX-<nombre-corto>`.
+2. **Tipo de Tarea:**
+   * **Feature / Nueva Funcionalidad:** Pregunta qué flujos, pantallas, campos, opciones y reglas de negocio requiere.
+   * **Bugfix / Corrección de Error:** Pregunta cuál es el síntoma observado, bajo qué condiciones se reproduce el fallo, qué comportamiento es el erróneo vs el esperado, y si hay excepciones o trazas conocidas.
+   * **Tarea Programada / Proceso Batch (Cron / Worker):** Pregunta la periodicidad/trigger, el criterio de selección de los datos/lotes, las mutaciones o efectos secundarios esperados, y qué ocurre en reintentos o ejecuciones repetidas.
+   * **Colas de Mensajería / Event-Driven:** Pregunta el canal/tópico/cola, formato del mensaje, estrategia de ACK, timeouts y manejo de mensajes fallidos (DLQ).
+   * **Refactor / Optimización:** Pregunta qué cuello de botella o deuda técnica se busca resolver, qué interfaces públicas deben permanecer inalteradas (compatibilidad retroactiva) y qué métrica o SLA se espera mejorar.
+   * **Migración de Base de Datos:** Pregunta el esquema actual, cambios requeridos en modelos/tablas y estrategia de retrocompatibilidad/rollback.
 
-### Paso 4: Definición de Contratos Técnicos (Agnóstico de Plataforma)
-Dependiendo del tipo de funcionalidad, acuerdan la interfaz técnica:
-* **Para APIs / Servicios (HTTP, REST, gRPC):** Métodos, rutas, headers, payloads JSON de entrada, respuestas exitosas y errores con códigos de estado.
-* **Para CLIs / Scripts:** Comandos, argumentos posicionales, flags, formato de stdout/stderr y códigos de retorno (`0`, `1`, etc.).
-* **Para Librerías / Módulos de Dominio:** Interfaces, firmas de clases/funciones, tipos de datos y excepciones lanzadas.
-* **Para Frontend / UI:** Componentes, estados visuales (carga, éxito, error), eventos de usuario y llamadas a servicios.
+### Paso 4: Propuesta de Contratos Técnicos o Invariantes (En el Chat)
+Con base en las respuestas, el agente redacta y presenta en el chat la propuesta técnica adecuada a la naturaleza del trabajo (¡NO inventar APIs ni códigos HTTP si no aplican!):
+* **Para APIs / Servicios Web:** Métodos, endpoints, payloads de request, respuestas exitosas y códigos de error (ej. 200, 201, 400, 401, 409).
+* **Para Interfaces UI / Frontend:** Vistas/componentes, inputs/props, eventos/outputs, estados visuales (`idle`, `submitting`, `success`, `error`).
+* **Para Procesos Batch / Crons:** Trigger/expresión cron, query o filtro de selección de lote, mutaciones en base de datos/archivos, reporte/telemetría de ejecución e idempotencia.
+* **Para Colas / Workers Asíncronos:** Nombre de cola/tópico, esquema JSON del payload, consumidor/handler, política de reintentos y Dead-Letter Queue.
+* **Para Bugfixes:** **Contrato de Invariantes**: Caso de reproducción determinista (input que causa el fallo), comportamiento anómalo actual vs comportamiento correcto esperado, y test de regresión que debe pasar a verde.
+* **Para Refactors / Optimizaciones:** Invariante externa (la API o firmas existentes no sufren cambios de ruptura) y métrica/condición de aceptación técnica.
+* **Para Migraciones de Base de Datos:** DDL Up/Down, estrategia sin bloqueo de tablas (zero-downtime), script de rollback y validación de datos existentes.
+* **Para CLIs / Scripts:** Comando, flags/argumentos, stdout, stderr y exit codes.
+* **Para Librerías / Capa de Dominio:** Firmas de funciones/clases, tipos de parámetros, precondiciones y excepciones esperadas.
 
-### Paso 5: Redactar Criterios de Aceptación y Crear el Archivo
-1. Traducir las reglas y casos borde a criterios deterministas: `CA-1`, `CA-2`, etc.
-2. Cada criterio debe ser comprobable (mediante una prueba unitaria o verificación definida).
-3. **Regla estricta:** Usar viñetas informativas (`*`), NUNCA casillas de verificación (`[ ]`). Las casillas de progreso pertenecen exclusivamente a `harness/specs/tasks.md`.
-4. Crear el archivo final en: `harness/specs/backlog/<ID>-<slug>/spec.md`.
+### Paso 5: Propuesta de Criterios de Aceptación (CA-*) (En el Chat)
+El agente traduce las reglas a una lista numerada de criterios deterministas y comprobables:
+* Formato: `CA-1`, `CA-2`, `CA-3`...
+* Cada criterio debe ser comprobable mediante una prueba automatizada o verificación formal.
+* En bugfixes, al menos un criterio (`CA-1`) debe certificar que el caso de reproducción deja de fallar (test de regresión).
+* En batch/crons, al menos un criterio debe certificar la idempotencia o el procesamiento correcto del lote.
+* **Regla estricta:** Usar viñetas informativas (`*`), NUNCA casillas de verificación (`[ ]`).
+
+### ⛔ CHECKPOINT OBLIGATORIO: Aprobación Previa del Desarrollador
+> **REGLA DE PARADA INFRANQUEABLE:**  
+> Queda **TERMINANTEMENTE PROHIBIDO** crear o modificar archivos (`write_to_file`) en `harness/specs/backlog/` o `harness/specs/active/` antes de que el usuario haya revisado el borrador de contratos/invariantes y Criterios de Aceptación (`CA-*`) presentado en el chat y haya respondido con su **aprobación explícita** ("De acuerdo", "Aprobado", "Adelante" o similar). Si el usuario solicita ajustes, el agente debe corregir la propuesta en el chat y volver a solicitar confirmación.
+
+### Paso 6: Materialización de la Spec y Pregunta de Activación
+Solo tras recibir la aprobación expresa del usuario:
+1. El agente crea el archivo formal en: `harness/specs/backlog/<ID>-<slug>/spec.md` siguiendo la Parte 2 de esta plantilla.
+2. El agente pregunta al usuario: *"¿Deseas activar esta feature de inmediato para comenzar el ciclo TDD, o prefieres mantenerla en el backlog?"*.
+   * Si el usuario decide activarla: Se traslada la carpeta a `harness/specs/active/<ID>-<slug>/` y se desglosan las micro-tareas atómicas en `harness/specs/tasks.md` (típicamente entre 3 y 12 según la complejidad, sin límite rígido).
 
 ---
 
 ## PARTE 2: Plantilla Oficial de spec.md
 
-Todo archivo creado dentro de `harness/specs/backlog/<ID>-<slug>/spec.md` debe respetar esta estructura:
+Todo archivo creado dentro de `harness/specs/backlog/<ID>-<slug>/spec.md` debe respetar esta estructura base, seleccionando la(s) variante(s) técnica(s) aplicable(s):
 
 ```markdown
-# Feature: [ID-Slug] - [Nombre Descriptivo de la Feature]
+# [ID-Slug] - [Nombre Descriptivo de la Tarea]
 
-## 0. Metadatos de la Feature
-* **Módulo Afectado:** `[nombre_modulo]` (ej. `services/auth`, `frontend`, `raiz`)
+## 0. Metadatos de la Spec
+* **Tipo de Tarea:** `[feature | bugfix | refactor | performance | batch_job | event_worker | db_migration]`
+* **Módulo Afectado:** `[nombre_modulo]` (ej. `core`, `api`, `frontend`, `global`)
 * **Estrategia de Tests:** `[dedicada | colocalizada | ninguna]`
-* **Ruta Base de Código:** `[ruta relativa]` (ej. `services/auth/src/`)
-* **Ubicación de Tests:** `[ruta o patrón]` (ej. `services/auth/tests/` o `*.spec.ts colocalizado`)
+* **Ruta Base de Código:** `[ruta relativa]` (ej. `src/` o `<modulo>/src/`)
+* **Ubicación de Tests:** `[ruta o patrón]` (ej. `<modulo>/tests/` o `*.spec.ts colocalizado`)
 
-## 1. Requisitos de Negocio
-* [Regla 1: Descripción clara e inequívoca del comportamiento esperado].
-* [Regla 2: Restricciones operativas, tipos permitidos o tiempos de expiración].
-* [Regla 3: Comportamiento ante entradas o estados inválidos].
+## 1. Requisitos y Contexto
+<!-- Explicación concisa y unívoca según el tipo de tarea -->
+* [Regla o Comportamiento esperado 1].
+* [Regla 2: Restricciones operativas, límites, expiraciones o formatos].
+* [Regla 3: Comportamiento ante fallos, entradas anómalas o condiciones de carrera].
 
-## 2. Contratos y Esquemas
+## 2. Contratos Técnicos e Invariantes
 
-<!-- SELECCIONAR LA VARIANTE APROPIADA SEGÚN EL TIPO DE PROYECTO -->
+<!-- SELECCIONAR O COMBINAR LA(S) VARIANTE(S) APROPIADA(S) SEGÚN EL TIPO DE TRABAJO -->
 
-### Variante A: APIs / Servicios (REST / JSON)
+### Variante A: APIs / Servicios de Red (REST / JSON / GraphQL / gRPC)
 #### Entrada (Request)
-- **Método / Endpoint:** `POST /api/v1/ejemplo`
+- **Método / Endpoint:** `POST /api/v1/recurso`
 - **Headers:** `Content-Type: application/json`
 - **Payload:**
 ```json
@@ -86,34 +109,112 @@ Todo archivo creado dentro de `harness/specs/backlog/<ID>-<slug>/spec.md` debe r
 }
 ```
 #### Salidas de Error
-- **Status:** `400 Bad Request` -> `{"error": "INVALID_INPUT", "detail": "Mensaje"}`
+- **Status:** `400 Bad Request` -> `{"error": "INVALID_INPUT", "detail": "Mensaje descriptivo"}`
 - **Status:** `401 Unauthorized` -> `{"error": "UNAUTHORIZED"}`
+- **Status:** `409 Conflict` -> `{"error": "ALREADY_EXISTS"}`
 
 ---
 
-### Variante B: CLIs / Comandos de Terminal
-- **Comando:** `app-cli process --input <archivo> [--dry-run]`
-- **Salida estándar (stdout):** `Resumen de procesamiento en formato tabular o JSON`
-- **Salida de error (stderr):** `Mensaje de error y sugerencia de uso`
-- **Códigos de salida:** `0` (éxito), `1` (archivo no encontrado), `2` (parámetros inválidos)
+### Variante B: CLIs / Comandos de Terminal / Scripts
+- **Comando de Invocación:** `app-cli process --input <archivo> [--dry-run]`
+- **Parámetros / Flags:** `--input` (requerido, ruta a archivo), `--dry-run` (opcional, booleano)
+- **Salida Estándar (stdout):** Resumen de ejecución tabular o JSON con total procesado.
+- **Salida de Error (stderr):** Mensajes diagnósticos claros y sugerencia de uso ante fallo.
+- **Códigos de Salida (Exit Codes):** `0` (éxito), `1` (archivo no encontrado), `2` (parámetros inválidos).
 
 ---
 
-### Variante C: Librerías / Módulos de Dominio (Código interno)
+### Variante C: Librerías / Módulos de Dominio Interno
 - **Firma / Interfaz:** `calculate_tax(amount: Decimal, region: str) -> TaxBreakdown`
-- **Precondiciones:** `amount > 0`, `region` debe ser un código ISO-3166 válido.
-- **Excepciones:** Lanza `InvalidRegionError` si la región no está registrada.
+- **Precondiciones:** `amount > 0`, `region` debe ser código ISO válido.
+- **Postcondiciones:** Retorna instancia inmutable de `TaxBreakdown` con totales calculados.
+- **Excepciones Tipadas:** Lanza `InvalidRegionError` si la región no existe en el catálogo.
 
 ---
 
-### Variante D: Componentes Frontend / UI
-- **Componente:** `LoginFormComponent`
-- **Inputs:** `redirectUrl: string`
-- **Outputs:** `onLoginSuccess(token: string)`
-- **Estados:** `idle` | `submitting` (spinner activo, botón deshabilitado) | `error` (banner rojo con mensaje accesible)
+### Variante D: Componentes UI / Frontend
+- **Componente / Vista:** `DataFilterComponent`
+- **Inputs / Props:** `categories: string[]`, `initialFilter?: string`
+- **Outputs / Eventos:** `onFilterChange(selected: string)`
+- **Estados Visuales:** `idle` | `loading` (indicador activo, control deshabilitado) | `empty` (mensaje de sin resultados) | `error` (alerta de fallo accesible)
+- **Validaciones / Comportamiento:** Validación de entrada limpia y emisión reactiva del filtro seleccionado.
+
+---
+
+### Variante E: Tareas Programadas / Procesos Batch (Crons / Daemons)
+- **Disparador / Frecuencia:** Expresión cron (ej. `0 2 * * *` - 2:00 AM diario) o comando CLI ejecutable.
+- **Criterio de Selección (Scope del Lote):** Registros en almacén de datos con `status = 'stale'` y `updated_at < NOW() - 30d`.
+- **Efectos Secundarios (Mutaciones):**
+  - Actualiza el estado a `status = 'archived'`.
+  - Emite registro de auditoría en la tabla o log de eventos.
+- **Idempotencia:** Si el job se ejecuta dos veces consecutivas con el mismo lote, la segunda ejecución reporta 0 registros mutados sin generar duplicados.
+- **Telemetría / Salida:** Log estructurado: `{"job": "archive_stale_records", "processed": 42, "failed": 0, "duration_ms": 180}`.
+
+---
+
+### Variante F: Eventos / Colas de Mensajería / Workers Asíncronos
+- **Cola / Tópico:** `tasks.document_processing`
+- **Esquema del Mensaje (Payload):**
+```json
+{
+  "event_id": "uuid-v4",
+  "event_type": "DOCUMENT_GENERATE",
+  "timestamp": "2026-09-11T18:00:00Z",
+  "payload": {
+    "document_id": 1042,
+    "format": "PDF",
+    "requested_by": "service_core"
+  }
+}
+```
+- **Consumidor / Handler:** `DocumentProcessingWorker.handle(event)`
+- **Estrategia de Confirmación (ACK):** ACK manual tras procesamiento exitoso; NACK con requeue en fallos transitorios.
+- **Manejo de Errores y Reintentos:** Máximo 3 reintentos con backoff exponencial. Al 4to fallo se envía a Dead-Letter Queue (`tasks.document_processing.dlq`).
+
+---
+
+### Variante G: Bugfixes / Corrección de Defectos
+- **Caso de Reproducción (El Fallo):**
+  - *Pasos para reproducir:* Invocar `parse_record(data)` con una cadena que contenga caracteres de control o formato incompleto.
+  - *Comportamiento erróneo actual:* Lanza una excepción no controlada `ValueError` provocando la interrupción del flujo sin liberar recursos.
+- **Comportamiento Esperado / Invariante Restaurada:**
+  - La función debe validar y descartar datos anómalos, retornando un resultado tipado de error controlado (`Result.failure`).
+  - Cualquier recurso abierto o descriptor de archivo debe liberarse en un bloque `finally`.
+- **Prueba de Regresión Obligatoria:** Test unitario `test_parse_record_handles_malformed_input()` que reproduzca el fallo inicial (rojo) y confirme la corrección sin efectos colaterales (verde).
+
+---
+
+### Variante H: Refactors Técnicos / Optimizaciones de Rendimiento
+- **Motivación / Deuda Técnica:** Desacoplar la lógica de cálculo del controlador y eliminar consultas $N+1$ en consultas masivas.
+- **Invariante Externa:** Cero cambios de ruptura en firmas públicas o interfaces expuestas. Todas las pruebas unitarias existentes deben seguir pasando en verde sin alteraciones.
+- **Métrica / SLA de Rendimiento (si aplica):**
+  - Reducción de consultas de $N+1$ a máximo 2 consultas.
+  - Tiempo de ejecución para 1.000 registros inferior a 80ms verificado mediante benchmark.
+
+---
+
+### Variante I: Migraciones de Base de Datos / Cambios de Esquema
+- **Motor / Herramienta:** PostgreSQL / SQLite / Alembic / Prisma / Flyway (según stack).
+- **Operación DDL:** Adición de columna `status_code` a la tabla `entities` con índice no bloqueante.
+- **Script UP (Migración):**
+```sql
+ALTER TABLE entities ADD COLUMN status_code VARCHAR(20) DEFAULT 'ACTIVE';
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_entities_status_code ON entities(status_code);
+```
+- **Script DOWN (Reversión / Rollback):**
+```sql
+DROP INDEX IF EXISTS idx_entities_status_code;
+ALTER TABLE entities DROP COLUMN status_code;
+```
+- **Estrategia de Retrocompatibilidad (Zero-Downtime):** La columna es nullable o posee un valor default seguro para no romper instancias de la aplicación en ejecución previa.
+- **Verificación de Integridad:** Consulta de verificación posterior para asegurar que ningún registro preexistente quedó en estado inconsistente.
+
+---
 
 ## 3. Criterios de Aceptación (Inmutables)
-* **CA-1:** [Condición inicial] -> [Acción disparada] -> [Resultado esperado verificable].
-* **CA-2:** Enviar parámetros incompletos o tipos inválidos rechaza la operación con el error esperado.
-* **CA-3:** Operaciones que superen el límite establecido son bloqueadas deterministamente.
+* **CA-1:** [Condición inicial / Entrada / Trigger] -> [Acción disparada] -> [Resultado esperado verificable].
+* **CA-2:** Enviar parámetros incompletos, tipos inválidos o datos corruptos rechaza la operación de forma determinista y segura.
+* **CA-3:** Operaciones concurrentes o repetidas respetan la idempotencia y no generan duplicaciones ni estados inconsistentes.
+* **CA-4:** [En bugfixes] El test de regresión que recrea el fallo pasa exitosamente en verde sin efectos secundarios.
+* **CA-5:** [En migraciones/refactors] La suite de pruebas de regresión pasa al 100% y la verificación confirma compatibilidad retroactiva.
 ```

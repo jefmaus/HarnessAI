@@ -9,7 +9,7 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 1. **Verificar Estado del Arnés:** Consulta `harness/config.json`. Si `"configured": false`, no inventes stacks ni asumas rutas; solicita al usuario inicializar el arnés con: *"Configura el arnés siguiendo harness/SETUP_HARNESS.md"*.
 2. **Inspeccionar Foco Activo:** Comprueba si existe una carpeta en `harness/specs/active/`.
    * Si existe: Tu contexto de trabajo se limita estrictamente a `harness/specs/active/*/spec.md` y `harness/specs/tasks.md`. Lee ambos antes de proponer cambios o tocar código.
-   * Si no existe: Pregunta al usuario si desea co-crear una nueva spec con `harness/specs/TEMPLATE.md` o activar una feature existente desde `harness/specs/backlog/`.
+   * Si no existe: Pregunta al usuario si desea co-crear una nueva spec con `harness/specs/TEMPLATE.md` o activar una feature existente desde `harness/specs/backlog/`. Al co-crear, sigue obligatoriamente el diálogo interactivo y el CHECKPOINT de aprobación previa antes de escribir cualquier archivo.
 3. **Restricción de Lectura:** Queda terminantemente prohibido inspeccionar archivos en `harness/specs/backlog/` o `harness/specs/done/` durante el desarrollo diario para evitar saturación de tokens y *context drift*.
 
 ---
@@ -32,12 +32,13 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 * **`harness/specs/active/`:** Foco de ejecución actual. **SOLO PUEDE EXISTIR EXACTAMENTE UNA CARPETA AQUÍ A LA VEZ**. Si hay dos, el sistema lo considerará una violación de integridad.
 * **`harness/specs/done/`:** Histórico inmutable de funcionalidades concluidas y verificadas.
 * **`harness/specs/tasks.md`:** Buffer de micro-tareas de la feature activa.
+* **Co-Creación de Specs:** Proceso conversacional obligatorio gobernado por `harness/specs/TEMPLATE.md`. Jamás se debe generar el archivo físico `spec.md` en un solo turno asumiendo requisitos; requiere la aprobación explícita del usuario sobre los contratos técnicos o invariantes y criterios de aceptación en el chat.
 
 ---
 
 ## 3. Protocolo TDD Obligatorio y Adaptativo
 1. **Lectura Previa:** Lee `harness/specs/active/*/spec.md` y verifica el Módulo Afectado y su Estrategia de Tests.
-2. **Desglose de Tareas:** Desglosa la spec en `harness/specs/tasks.md` en bloques manejables de **5 a 8 micro-tareas**.
+2. **Desglose de Tareas:** Desglosa la spec en `harness/specs/tasks.md` en micro-tareas atómicas y manejables (típicamente entre 3 y 12 según la complejidad, sin límite rígido), donde cada tarea represente un ciclo TDD verificable.
 3. **Selección:** Toma la siguiente tarea y márcala en progreso con `[-]`. Solo puede haber una tarea en `[-]` a la vez.
 4. **Fase Roja (Según Estrategia del Módulo):**
    * **Estrategia Dedicada:** Escribe la prueba unitaria en el directorio de tests del módulo (ej. `services/auth/tests/`).
@@ -70,3 +71,4 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 * Escribir código de producción sin una prueba unitaria previa que lo justifique (salvo módulos con estrategia declarada formalmente como `none`).
 * Intentar activar más de una feature simultáneamente en `harness/specs/active/`.
 * Dejar comentarios `TODO` o bloques de código comentado en el código fuente.
+* Crear o modificar archivos `spec.md` (en `backlog/` o `active/`) sin haber presentado previamente el borrador de reglas, contratos técnicos / invariantes y Criterios de Aceptación (`CA-*`) en el chat y haber obtenido la aprobación explícita del usuario.
