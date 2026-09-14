@@ -4,6 +4,7 @@ Persistencia atómica y quirúrgica de decisiones técnicas de arquitectura (ADR
 """
 import datetime
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -30,23 +31,30 @@ def init_memory_storage():
         DETAILS_FILE.touch()
 
 def get_next_id():
-    """Calcula el siguiente identificador secuencial MEM-XXX ignorando líneas corruptas."""
+    """Calcula el siguiente identificador MEM-XXX como max(details.jsonl, index.md) + 1.
+
+    Leer TAMBIEN index.md evita IDs duplicados si el JSONL se corrompio, se borro
+    o si el indice fue editado a mano (v1.1).
+    """
     max_num = 0
     if DETAILS_FILE.exists():
-        with DETAILS_FILE.open("r", encoding="utf-8") as f:
+        with DETAILS_FILE.open("r", encoding="utf-8-sig") as f:
             for line in f:
                 line_str = line.strip()
                 if not line_str:
                     continue
                 try:
                     record = json.loads(line_str)
-                    rec_id = record.get("id", "")
+                    rec_id = str(record.get("id", ""))
                     if rec_id.startswith("MEM-"):
                         num = int(rec_id.replace("MEM-", ""))
-                        if num > max_num:
-                            max_num = num
+                        max_num = max(max_num, num)
                 except (ValueError, json.JSONDecodeError):
                     continue
+    if INDEX_FILE.exists():
+        with INDEX_FILE.open("r", encoding="utf-8-sig") as f:
+            for match in re.finditer(r"MEM-(\d+)", f.read()):
+                max_num = max(max_num, int(match.group(1)))
     return f"MEM-{max_num + 1:03d}"
 
 def clean_markdown_cell(text):

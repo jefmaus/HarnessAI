@@ -9,10 +9,14 @@ Este documento define el protocolo interactivo que el agente debe seguir para co
 Antes de generar cualquier archivo, el agente asume el rol de arquitecto de software y ejecuta estos pasos conversacionales en orden estricto:
 
 ### Paso 1: Cálculo Autónomo del Siguiente ID (Sin preguntar al usuario)
-El agente calcula el número de forma autónoma:
-1. Inspecciona los nombres de carpetas en `harness/specs/backlog/`, `harness/specs/active/` y `harness/specs/done/`.
-2. Identifica el número de prefijo más alto existente (ej. si existe `014-user-profile`, el mayor es 14).
-3. Suma +1 y formatea el nuevo ID a 3 dígitos con ceros a la izquierda (ej. `015`). Si no hay carpetas previas, inicia en `001`.
+El ID se calcula de forma **determinista e infalible** ejecutando el script del arnés:
+```bash
+python harness/scripts/new-spec.py <slug> [--title "Nombre descriptivo"]
+```
+1. El script inspecciona los prefijos numéricos en `harness/specs/backlog/`, `harness/specs/active/` y `harness/specs/done/`.
+2. Toma el máximo, suma +1 y formatea a 3 dígitos (`001`, `015`, …).
+3. **Rechaza en seco** slugs mal formados (deben ser `kebab-case`) e IDs numéricos duplicados entre carpetas; avisa de carpetas sin prefijo `NNN-` para que las renombres.
+4. Materializa el esqueleto de la spec **solo tras el CHECKPOINT** (ver abajo) con el campo de evidencia `Aprobada:`.
 
 ### Paso 2: Asignación de Módulo / Servicio y Estrategia de Tests
 El agente consulta la topología registrada en `AGENTS.md` o `harness/config.json` y acuerda con el usuario:
@@ -49,6 +53,7 @@ Con base en las respuestas, el agente redacta y presenta en el chat la propuesta
 El agente traduce las reglas a una lista numerada de criterios deterministas y comprobables:
 * Formato: `CA-1`, `CA-2`, `CA-3`...
 * Cada criterio debe ser comprobable mediante una prueba automatizada o verificación formal.
+* **Cada `CA-*` debe citar el comando exacto que lo certifica** (ej. `verify.py auth`, `node --test src/validate.test.js`). Un CA sin comando de verificación es ambiguo y no es aceptable.
 * En bugfixes, al menos un criterio (`CA-1`) debe certificar que el caso de reproducción deja de fallar (test de regresión).
 * En batch/crons, al menos un criterio debe certificar la idempotencia o el procesamiento correcto del lote.
 * **Regla estricta:** Usar viñetas informativas (`*`), NUNCA casillas de verificación (`[ ]`).
@@ -59,9 +64,17 @@ El agente traduce las reglas a una lista numerada de criterios deterministas y c
 
 ### Paso 6: Materialización de la Spec y Pregunta de Activación
 Solo tras recibir la aprobación expresa del usuario:
-1. El agente crea el archivo formal en: `harness/specs/backlog/<ID>-<slug>/spec.md` siguiendo la Parte 2 de esta plantilla.
+1. El agente materializa el archivo con el script del arnés (que calcula el ID y rechaza duplicados):
+   ```bash
+   python harness/scripts/new-spec.py <slug> --title "Nombre descriptivo"
+   ```
+   Luego completa el contenido (requisitos, contratos, CA-*) ya consensuado en el chat, y **rellena el campo `Aprobada:` con la fecha real del checkpoint** como evidencia auditable.
 2. El agente pregunta al usuario: *"¿Deseas activar esta feature de inmediato para comenzar el ciclo TDD, o prefieres mantenerla en el backlog?"*.
-   * Si el usuario decide activarla: Se traslada la carpeta a `harness/specs/active/<ID>-<slug>/` y se desglosan las micro-tareas atómicas en `harness/specs/tasks.md` (típicamente entre 3 y 12 según la complejidad, sin límite rígido).
+   * Si decide activarla, se traslada de forma determinista (nunca a mano):
+     ```bash
+     python harness/scripts/activate-spec.py <ID-slug>
+     ```
+     El script garantiza que no haya otra feature activa, enlaza `tasks.md` con la cabecera `> Feature:` y el agente desglosa las micro-tareas atómicas (típicamente entre 3 y 12, sin límite rígido).
 
 ---
 
@@ -75,9 +88,10 @@ Todo archivo creado dentro de `harness/specs/backlog/<ID>-<slug>/spec.md` debe r
 ## 0. Metadatos de la Spec
 * **Tipo de Tarea:** `[feature | bugfix | refactor | performance | batch_job | event_worker | db_migration]`
 * **Módulo Afectado:** `[nombre_modulo]` (ej. `core`, `api`, `frontend`, `global`)
-* **Estrategia de Tests:** `[dedicada | colocalizada | ninguna]`
+* **Estrategia de Tests:** `[dedicated | co-located | none]` (acepta alias `dedicada | colocalizada | ninguna`)
 * **Ruta Base de Código:** `[ruta relativa]` (ej. `src/` o `<modulo>/src/`)
 * **Ubicación de Tests:** `[ruta o patrón]` (ej. `<modulo>/tests/` o `*.spec.ts colocalizado`)
+* **Aprobada:** `[AAAA-MM-DD] por [usuario]` (evidencia del CHECKPOINT; obligatoria antes de activar)
 
 ## 1. Requisitos y Contexto
 <!-- Explicación concisa y unívoca según el tipo de tarea -->
@@ -212,9 +226,15 @@ ALTER TABLE entities DROP COLUMN status_code;
 ---
 
 ## 3. Criterios de Aceptación (Inmutables)
-* **CA-1:** [Condición inicial / Entrada / Trigger] -> [Acción disparada] -> [Resultado esperado verificable].
-* **CA-2:** Enviar parámetros incompletos, tipos inválidos o datos corruptos rechaza la operación de forma determinista y segura.
-* **CA-3:** Operaciones concurrentes o repetidas respetan la idempotencia y no generan duplicaciones ni estados inconsistentes.
-* **CA-4:** [En bugfixes] El test de regresión que recrea el fallo pasa exitosamente en verde sin efectos secundarios.
-* **CA-5:** [En migraciones/refactors] La suite de pruebas de regresión pasa al 100% y la verificación confirma compatibilidad retroactiva.
+* **CA-1:** [Condición inicial / Entrada / Trigger] -> [Acción disparada] -> [Resultado esperado verificable]. *Verifica con:* `[comando exacto]`.
+* **CA-2:** Enviar parámetros incompletos, tipos inválidos o datos corruptos rechaza la operación de forma determinista y segura. *Verifica con:* `[comando exacto]`.
+* **CA-3:** Operaciones concurrentes o repetidas respetan la idempotencia y no generan duplicaciones ni estados inconsistentes. *Verifica con:* `[comando exacto]`.
+* **CA-4:** [En bugfixes] El test de regresión que recrea el fallo pasa exitosamente en verde sin efectos secundarios. *Verifica con:* `[comando exacto]`.
+* **CA-5:** [En migraciones/refactors] La suite de pruebas de regresión pasa al 100% y la verificación confirma compatibilidad retroactiva. *Verifica con:* `[comando exacto]`.
+
+## 4. Seguridad y Resiliencia (solo si aplica)
+<!-- Rellenar únicamente las líneas pertinentes al caso; escribir 'no aplica' en las demás. -->
+* **Secretos:** [no aplica | cómo se evita la fuga de credenciales / dónde se inyectan]
+* **Validación de entradas:** [no aplica |_sanitización o límites de entrada_]
+* **Límites o rollback:** [no aplica | timeout, reintentos o plan de reversión]
 ```

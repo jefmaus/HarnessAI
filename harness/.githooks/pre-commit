@@ -1,25 +1,37 @@
 #!/usr/bin/env bash
-# Hook determinista pre-commit: barrera física infranqueable de calidad y seguridad
+# Hook determinista pre-commit: barrera fisica infranqueable de calidad y seguridad.
+# v1.1: logica delegada a scripts Python puros (testeables y portables).
 set -e
 
-echo "🔍 [Pre-Commit] Verificando archivos sensibles y credenciales en staging..."
-if git diff --cached --name-only | grep -E "(\.env|\.pem|\.key|id_rsa)$"; then
-    echo "❌ [Pre-Commit] ERROR: Intento de commitear archivos sensibles o claves privadas detectado."
-    exit 1
+# Deteccion robusta del interprete: venv del proyecto > py -3 (Windows) > python3 > python
+PY_BIN=""
+PY_ARGS=""
+if [ -n "${VIRTUAL_ENV:-}" ]; then
+    if [ -x "${VIRTUAL_ENV}/bin/python" ]; then
+        PY_BIN="${VIRTUAL_ENV}/bin/python"
+    elif [ -x "${VIRTUAL_ENV}/Scripts/python.exe" ]; then
+        PY_BIN="${VIRTUAL_ENV}/Scripts/python.exe"
+    fi
 fi
-
-echo "🧪 [Pre-Commit] Ejecutando suite de verificación universal (harness/scripts/verify.py)..."
-
-if command -v python3 >/dev/null 2>&1; then
+if [ -z "$PY_BIN" ] && command -v py >/dev/null 2>&1; then
+    PY_BIN="py"; PY_ARGS="-3"
+fi
+if [ -z "$PY_BIN" ] && command -v python3 >/dev/null 2>&1; then
     PY_BIN="python3"
-elif command -v python >/dev/null 2>&1; then
+fi
+if [ -z "$PY_BIN" ] && command -v python >/dev/null 2>&1; then
     PY_BIN="python"
-else
-    echo "❌ [Pre-Commit] ERROR: Intérprete de Python no disponible en PATH para ejecutar verify.py."
+fi
+if [ -z "$PY_BIN" ]; then
+    echo "❌ [Pre-Commit] ERROR: No hay interprete Python disponible (VIRTUAL_ENV, py -3, python3 o python)."
     exit 1
 fi
 
-"$PY_BIN" harness/scripts/verify.py
+echo "🔍 [Pre-Commit] Escaneando secretos (nombre + contenido anadido) en el staging..."
+"$PY_BIN" $PY_ARGS harness/scripts/secret-scan.py
 
-echo "✅ [Pre-Commit] Verificación completada con éxito. Procediendo con el commit."
+echo "🧪 [Pre-Commit] Ejecutando suite de verificacion universal (harness/scripts/verify.py)..."
+"$PY_BIN" $PY_ARGS harness/scripts/verify.py
+
+echo "✅ [Pre-Commit] Verificacion completada con exito. Procediendo con el commit."
 exit 0

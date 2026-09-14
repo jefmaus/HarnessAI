@@ -31,7 +31,7 @@ def main():
         sys.exit(1)
 
     found = False
-    with DETAILS_FILE.open("r", encoding="utf-8") as f:
+    with DETAILS_FILE.open("r", encoding="utf-8-sig") as f:
         for line in f:
             line_str = line.strip()
             if not line_str:

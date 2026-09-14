@@ -1,0 +1,14 @@
+# Basura de interpretadores y caché
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+
+# Secretos: bloquear variantes de dotenv, conservar plantillas de ejemplo
+.env*
+!.env.example
+
+# Artefactos comunes de builds locales
+*.sqlite3-journal
+.DS_Store
+Thumbs.db

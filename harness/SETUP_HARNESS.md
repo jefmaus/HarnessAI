@@ -35,6 +35,8 @@ Formula las siguientes preguntas de forma concisa y espera las respuestas antes 
    * Compilación / Chequeo de tipos (ej. `tsc --noEmit`, `dotnet build` o `none`).
    * Pruebas unitarias con cobertura (ej. `pytest --cov`, `npm test -- --watch=false`, `go test ./...` o `none`).
 
+   **Regla de vocabulario de estrategias:** usa el valor canónico en inglés en `config.json` — `dedicated`, `co-located`, `none` — (el runner también tolera los alias en español `dedicada`, `colocalizada`, `ninguna`). Si un módulo declara `dedicated` o `co-located`, su comando de `test` es **obligatorio**; no puede quedar en `null`.
+
 5. **Persistencia y Almacenamiento:**
    ¿Qué base de datos o almacenamiento se utilizará y mediante qué librería o driver? (ej. PostgreSQL con Prisma, MongoDB con Motor, SQLite con SQLAlchemy, Redis, o memoria volátil).
 
@@ -83,6 +85,13 @@ Escribe el archivo con `configured: true` y el catálogo de módulos configurado
 ### 2. Actualizar la Constitución Central (`AGENTS.md`)
 Rellena la Sección 1 de `AGENTS.md` con la tabla de topología, lenguajes, estrategias de test y comandos de verificación acordados, manteniendo todas las reglas constitucionales intactas.
 
+### 2.5 Prueba en Seco Obligatoria de Cada Comando (Dry-Run)
+
+Antes de dar por buena la configuración, el agente **DEBE ejecutar cada comando registrado** (lint, build y test de cada módulo) **una vez** y comprobar que termina en `exit 0` y que realmente invoca el runner de pruebas del stack declarado. Un `test` que siempre pasa (por ejemplo, un comando mal escrito que no descubre ningún test) **invalida la estrategia `dedicated`/`co-located`**.
+
+* Si un comando falla: reporta la salida cruda al usuario y corrígelo en conjunto (no registres comandos rotos).
+* Si un módulo aún no tiene código ni tests: declara su estrategia en `none` de forma explícita o pospone el registro. Nunca inventes un comando de test.
+
 ### 3. Activar los Frenos Físicos de Git
 Ejecuta en la terminal del sistema:
 ```bash
@@ -91,8 +100,14 @@ git config core.hooksPath harness/.githooks
 *(Nota: En sistemas Unix/Linux/macOS, otorga permisos al hook si es necesario: `chmod +x harness/.githooks/pre-commit`).*
 
 ### 4. Prueba de Sanidad del Pipeline
-Ejecuta:
+Ejecuta (usa `py -3` en lugar de `python` si tu sistema solo expone el lanzador de Windows):
 ```bash
 python harness/scripts/verify.py
+python harness/scripts/secret-scan.py
+git config core.hooksPath
 ```
-Si la ejecución concluye exitosamente o notifica el estado de los módulos registrados, confirma al usuario que el arnés está 100% operativo y listo para co-crear la primera especificación con `harness/specs/TEMPLATE.md`.
+* `verify.py` debe reportar los módulos registrados en verde.
+* `secret-scan.py` debe salir en `0` con el staging limpio (confirma que la barrera de credenciales está operativa).
+* `git config core.hooksPath` debe devolver exactamente `harness/.githooks`; si está vacío, el hook **no** está activo (recuerda que esta config no viaja con `git clone`).
+
+Si todo concluye correctamente, confirma al usuario que el arnés está 100% operativo y listo para co-crear la primera especificación con `harness/specs/TEMPLATE.md`.

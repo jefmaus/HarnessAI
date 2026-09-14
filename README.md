@@ -20,16 +20,16 @@ Cuando quieras planificar una funcionalidad, dile al agente:
 ```text
 Vamos a co-crear una nueva feature siguiendo harness/specs/TEMPLATE.md
 ```
-El agente calculará el siguiente ID autónomamente (`001`, `002`...), acordará contigo los contratos y generará la especificación en `harness/specs/backlog/`.
+El agente acordará contigo los contratos y criterios de aceptación; tras tu aprobación materializa la spec de forma determinista con `python harness/scripts/new-spec.py <slug>` (calcula el siguiente ID y evita duplicados o slugs inválidos).
 
 ### 3. Desarrollar con Foco Único
-1. Mueve la carpeta de `harness/specs/backlog/XXX-nombre/` a `harness/specs/active/XXX-nombre/`.
+1. Activa la spec con `python harness/scripts/activate-spec.py XXX-nombre` (garantiza una sola feature activa y enlaza `tasks.md`).
 2. El agente volcará las micro-tareas en `harness/specs/tasks.md` y ejecutará el ciclo **Rojo-Verde-Refactor**.
 3. Al terminar todas las tareas, ejecuta:
    ```bash
    python harness/scripts/finish-feature.py
    ```
-   La feature se archivará automáticamente en `harness/specs/done/` y el buffer quedará listo para la siguiente entrega.
+   La feature se archivará automáticamente en `harness/specs/done/` y el buffer quedará listo para la siguiente entrega. Después commitea el archivado.
 
 ---
 

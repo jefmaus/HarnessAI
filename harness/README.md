@@ -40,14 +40,14 @@ flowchart TD
     %% 1. Co-creación
     subgraph F1 ["Fase 1: Co-Creación de Especificación"]
         C1["harness/specs/TEMPLATE.md"] --> C2["Calcula siguiente ID autónomamente (ej. 001)"]
-        C2 --> C3["Asigna Módulo y Estrategia de Tests (Dedicada/Colocalizada/Ninguna)"]
+        C2 --> C3["Asigna Módulo y Estrategia de Tests (dedicated/co-located/none)"]
         C3 --> C4["Consensúa contratos, esquemas y reglas CA-*"]
-        C4 --> C5["Crea harness/specs/backlog/XXX-slug/spec.md"]
+        C4 --> C5["python new-spec.py -> backlog/XXX-slug/spec.md"]
     end
 
     %% 2. Activación
     subgraph F2 ["Fase 2: Planificación y Activación"]
-        A1["Mover carpeta a harness/specs/active/XXX-slug/"] --> A2["Regla física: Solo 1 feature activa a la vez"]
+        A1["python activate-spec.py -> active/XXX-slug/ (enlaza tasks.md)"] --> A2["Regla física: Solo 1 feature activa a la vez"]
         A2 --> A3["Desglosar micro-tareas atómicas en harness/specs/tasks.md"]
     end
 
@@ -120,11 +120,14 @@ El sistema utiliza el principio de **foco de contexto único**: el modelo no deb
 
 | Archivo | Propósito Operativo |
 | :--- | :--- |
-| **`harness/.githooks/pre-commit`** | **Freno físico de Git.** Hook ejecutable que escanea el staging de Git buscando credenciales, claves privadas o archivos `.env`. Si está limpio, dispara `python harness/scripts/verify.py`. Si algo falla, cancela el commit con código de error `1`. |
-| **`harness/scripts/verify.py`** | **Runner universal determinista.** Script en Python puro ejecutable nativamente en Windows, Linux y macOS. Lee `harness/config.json`, valida el estado del arnés y ejecuta secuencialmente linter, compilación y suite de pruebas. Permite verificar un módulo específico (`python harness/scripts/verify.py auth`) o el proyecto completo. |
-| **`harness/scripts/finish-feature.py`** | **Comando de entrega y cierre.** Valida físicamente que solo exista 1 feature activa, comprueba que todas las micro-tareas de `tasks.md` estén en `[x]`, corre la suite de verificación completa, traslada la carpeta a `harness/specs/done/` (previniendo colisiones) y limpia `tasks.md`. |
-| **`harness/scripts/save-memory.py`** | **Persistencia atómica de conocimiento.** Guarda decisiones de arquitectura o soluciones a bugs complejos agregando un registro JSON en `harness/memory/details.jsonl` y una fila sintética en `harness/memory/index.md` con cálculo de rutas relativas robustas. |
-| **`harness/scripts/get-memory.py`** | **Recuperador de contexto JIT.** Permite consultar rápidamente el contexto y la solución de un registro de memoria específico por su ID (`python harness/scripts/get-memory.py MEM-001`) sin cargar todo el historial al contexto del LLM. |
+| **`harness/.githooks/pre-commit`** | **Freno físico de Git.** Delegador delgado (bash) que localiza el intérprete Python (`VIRTUAL_ENV` → `py -3` → `python3` → `python`) y dispara dos barreras: `secret-scan.py` primero y `verify.py` después. Si algo falla, cancela el commit con código de error `1`. |
+| **`harness/scripts/secret-scan.py`** | **Cazador de credenciales.** Escanea el staging *agregado/modificado* (los **borrados se permiten** para poder retirar secretos) por nombre (`.env*`, `*.pem`, `*.key`, `id_rsa`/`id_ed25519`, etc., con excepción de plantillas `.env.example` y `.pub`) y por **contenido de líneas añadidas** (claves privadas, AWS, GitHub, Slack). Nunca imprime el secreto, solo archivo y patrón. |
+| **`harness/scripts/verify.py`** | **Runner universal determinista.** Script en Python puro ejecutable nativamente en Windows, Linux y macOS. Lee `harness/config.json` (tolerante a BOM), valida su integridad (rutas de módulos dentro de la raíz, vocabulario de estrategias, `test` obligatorio cuando la estrategia ejecuta pruebas) y ejecuta secuencialmente linter, compilación y pruebas con timeout por comando. Permite verificar un módulo específico (`python harness/scripts/verify.py auth`) o el proyecto completo. |
+| **`harness/scripts/new-spec.py`** | **Creador determinista de specs.** Calcula el siguiente ID escaneando `backlog/active/done`, rechaza slugs inválidos e IDs duplicados, y materializa el esqueleto de `spec.md` (con evidencia de aprobación). Barrera anti-alucinación del Paso 6 de `TEMPLATE.md`. |
+| **`harness/scripts/activate-spec.py`** | **Activador de la máquina de estados.** Traslada la spec del backlog a `active/` garantizando físicamente la regla 'Single-Task Focus' y escribiendo la cabecera `> Feature:` en `tasks.md`. |
+| **`harness/scripts/finish-feature.py`** | **Comando de entrega y cierre.** Exige el vínculo `> Feature:` coherente con la carpeta activa, rechaza `tasks.md` en reposo o con tareas pendientes/in-en-progreso (casillas en viñetas o listas numeradas), corre la suite completa, traslada la carpeta a `harness/specs/done/` (previniendo colisiones) y restaura `tasks.md`. Luego commitea el archivado. |
+| **`harness/scripts/save-memory.py`** | **Persistencia de conocimiento.** Agrega un registro a `details.jsonl` y una fila al `index.md`. El siguiente ID es `max(historial, índice) + 1`, a prueba de JSONL corrupto o ediciones manuales. Escapa pipes para conservar la tabla Markdown válida. |
+| **`harness/scripts/get-memory.py`** | **Recuperador de contexto JIT.** Consulta el contexto y la solución de un registro por su ID (`python harness/scripts/get-memory.py MEM-001`) sin cargar todo el historial al contexto del LLM. |
 
 ---
 
@@ -165,12 +168,18 @@ Git no rastrea directorios vacíos. Para garantizar que la arquitectura de carpe
   ```text
   Vamos a co-crear una nueva feature siguiendo harness/specs/TEMPLATE.md
   ```
-* El agente calculará el siguiente ID autónomamente (`001`, `002`...), acordará a qué módulo afecta la feature, su estrategia de pruebas (Dedicada, Colocalizada o Ninguna), los contratos y los criterios de aceptación.
-* Se generará el archivo `harness/specs/backlog/001-<nombre>/spec.md`.
+* Tras el diálogo y la aprobación explícita (CHECKPOINT), el agente materializa la spec de forma determinista:
+  ```bash
+  python harness/scripts/new-spec.py <slug> --title "Nombre descriptivo"
+  ```
+  El script calcula el siguiente ID (`001`, `002`...), valida el slug, rechaza IDs duplicados y genera `harness/specs/backlog/<ID>-<slug>/spec.md`.
 
 ### 3. Iniciar el desarrollo (Foco Único):
-* Mueve la carpeta de `harness/specs/backlog/001-<nombre>/` a `harness/specs/active/001-<nombre>/`.
-* El agente volcará las micro-tareas atómicas en `harness/specs/tasks.md`.
+* Activa la spec con el script del arnés (nunca moviendo carpetas a mano):
+  ```bash
+  python harness/scripts/activate-spec.py 001-<slug>
+  ```
+  Garantiza que solo exista una feature activa y enlaza `harness/specs/tasks.md` con la cabecera `> Feature:`. El agente desglosa las micro-tareas atómicas en `tasks.md`.
 
 ### 4. Desarrollar con TDD Adaptativo:
 * El agente toma la micro-tarea y la marca con `[-]` en `tasks.md`.
@@ -208,4 +217,8 @@ Git no rastrea directorios vacíos. Para garantizar que la arquitectura de carpe
   ```bash
   python harness/scripts/finish-feature.py
   ```
-* El script validará que no queden tareas pendientes, confirmará que solo hay 1 feature activa, correrá la suite de verificación completa, moverá la carpeta a `harness/specs/done/001-<nombre>/` y restaurará `tasks.md` a su estado de reposo para el siguiente ciclo.
+* El script validará el vínculo `> Feature:` con la única feature activa, que no queden tareas pendientes/in-progreso (en viñetas o listas numeradas), correrá la suite de verificación completa, moverá la carpeta a `harness/specs/done/001-<nombre>/` y restaurará `tasks.md` a su estado de reposo.
+* **Cierra el ciclo commiteando el archivado** (los movimientos de specs deben quedar en el historial):
+  ```bash
+  git add -A && git commit -m "chore(specs): archivar 001-<nombre>"
+  ```
