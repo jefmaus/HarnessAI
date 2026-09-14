@@ -215,6 +215,21 @@ def main():
     config = load_config()
 
     if not config.get("configured", False):
+        # Si el arnés no está configurado, permitir commits si SOLO se modifican archivos del propio arnés/docs
+        try:
+            diff_res = subprocess.run(["git", "diff", "--cached", "--name-only"], capture_output=True, text=True, cwd=str(ROOT_DIR))
+            staged_files = [f.strip() for f in diff_res.stdout.splitlines() if f.strip()]
+            harness_files = all(
+                f.startswith("harness/") or f in ("AGENTS.md", "README.md", ".gitignore", ".gitattributes")
+                for f in staged_files
+            )
+            if staged_files and harness_files:
+                print("ℹ️  [VERIFY] Arnés no configurado, pero solo se detectaron cambios en archivos del arnés/docs.")
+                print("    Permitiendo commit de infraestructura del arnés.")
+                sys.exit(0)
+        except Exception:
+            pass
+
         print("=" * 65)
         print("⚠️  [VERIFY] EL ARNES AUN NO HA SIDO CONFIGURADO")
         print("=" * 65)

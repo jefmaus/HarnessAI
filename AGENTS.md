@@ -34,6 +34,7 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 * **`harness/specs/done/`:** Histórico inmutable de funcionalidades concluidas y verificadas.
 * **`harness/specs/tasks.md`:** Buffer de micro-tareas de la feature activa. **Debe llevar la cabecera `> Feature: <ID>-<slug>`** que lo vincula físicamente a la feature; `activate-spec.py` la escribe y `finish-feature.py` la exige.
 * **Transiciones físicas (anti-alucinación):** crear specs con `python harness/scripts/new-spec.py <slug>`, activar con `python harness/scripts/activate-spec.py <ID-slug>` y cerrar con `python harness/scripts/finish-feature.py`. Está prohibido mover carpetas de specs a mano.
+* **Sincronización Concurrente de IDs:** En entornos con múltiples desarrolladores, el hook `pre-push` ejecuta automáticamente `python harness/scripts/rebase-spec.py`. Si detecta colisión con `origin/main`, renumera la spec de forma determinista y crea el commit de ajuste antes de permitir el push. En pipelines de CI/CD (ej. Azure DevOps o GitHub Actions), el mismo script puede integrarse en la validación de Pull Requests para resolver colisiones automáticamente en la nube.
 * **Co-Creación de Specs:** Proceso conversacional obligatorio gobernado por `harness/specs/TEMPLATE.md`. Jamás se debe generar el archivo físico `spec.md` en un solo turno asumiendo requisitos; requiere la aprobación explícita del usuario sobre los contratos técnicos o invariantes y criterios de aceptación en el chat.
 
 ---
@@ -70,7 +71,7 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 
 ## 5. Deny-List (Acciones Prohibidas)
 * Modificar archivos en `harness/.githooks/` sin orden expresa del usuario.
-* Realizar commits con la bandera `--no-verify`.
+* Realizar commits o pushes con la bandera `--no-verify`.
 * Escribir código de producción sin una prueba unitaria previa que lo justifique (salvo módulos con estrategia declarada formalmente como `none`).
 * Intentar activar más de una feature simultáneamente en `harness/specs/active/`.
 * Mover, renombrar o archivar carpetas de `specs/` a mano en lugar de usar `new-spec.py` / `activate-spec.py` / `finish-feature.py` (las transiciones de la máquina de estados son físicas y deterministas).

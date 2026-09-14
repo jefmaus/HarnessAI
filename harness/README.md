@@ -120,12 +120,14 @@ El sistema utiliza el principio de **foco de contexto único**: el modelo no deb
 
 | Archivo | Propósito Operativo |
 | :--- | :--- |
-| **`harness/.githooks/pre-commit`** | **Freno físico de Git.** Delegador delgado (bash) que localiza el intérprete Python (`VIRTUAL_ENV` → `py -3` → `python3` → `python`) y dispara dos barreras: `secret-scan.py` primero y `verify.py` después. Si algo falla, cancela el commit con código de error `1`. |
+| **`harness/.githooks/pre-commit`** | **Freno físico de Git (Commit).** Delegador delgado (bash) que localiza el intérprete Python (`VIRTUAL_ENV` → `py -3` → `python3` → `python`) y dispara dos barreras: `secret-scan.py` primero y `verify.py` después. Si algo falla, cancela el commit con código de error `1`. |
+| **`harness/.githooks/pre-push`** | **Aduana remota de Git (Push).** Intercepta el `git push`, valida que no haya colisiones de IDs de specs contra la rama remota base (`origin/main`) y dispara `rebase-spec.py` automáticamente si un compañero mergeó el mismo ID previamente. |
 | **`harness/scripts/secret-scan.py`** | **Cazador de credenciales.** Escanea el staging *agregado/modificado* (los **borrados se permiten** para poder retirar secretos) por nombre (`.env*`, `*.pem`, `*.key`, `id_rsa`/`id_ed25519`, etc., con excepción de plantillas `.env.example` y `.pub`) y por **contenido de líneas añadidas** (claves privadas, AWS, GitHub, Slack). Nunca imprime el secreto, solo archivo y patrón. |
 | **`harness/scripts/verify.py`** | **Runner universal determinista.** Script en Python puro ejecutable nativamente en Windows, Linux y macOS. Lee `harness/config.json` (tolerante a BOM), valida su integridad (rutas de módulos dentro de la raíz, vocabulario de estrategias, `test` obligatorio cuando la estrategia ejecuta pruebas) y ejecuta secuencialmente linter, compilación y pruebas con timeout por comando. Permite verificar un módulo específico (`python harness/scripts/verify.py auth`) o el proyecto completo. |
 | **`harness/scripts/new-spec.py`** | **Creador determinista de specs.** Calcula el siguiente ID escaneando `backlog/active/done`, rechaza slugs inválidos e IDs duplicados, y materializa el esqueleto de `spec.md` (con evidencia de aprobación). Barrera anti-alucinación del Paso 6 de `TEMPLATE.md`. |
 | **`harness/scripts/activate-spec.py`** | **Activador de la máquina de estados.** Traslada la spec del backlog a `active/` garantizando físicamente la regla 'Single-Task Focus' y escribiendo la cabecera `> Feature:` en `tasks.md`. |
 | **`harness/scripts/finish-feature.py`** | **Comando de entrega y cierre.** Exige el vínculo `> Feature:` coherente con la carpeta activa, rechaza `tasks.md` en reposo o con tareas pendientes/in-en-progreso (casillas en viñetas o listas numeradas), corre la suite completa, traslada la carpeta a `harness/specs/done/` (previniendo colisiones) y restaura `tasks.md`. Luego commitea el archivado. |
+| **`harness/scripts/rebase-spec.py`** | **Sincronizador multi-desarrollador.** Detecta y resuelve colisiones de IDs entre la rama de trabajo y `origin/main`. Renumera carpetas de specs (en `active/`, `done/` o `backlog/`), actualiza encabezados y crea el commit de ajuste de forma determinista. Invocado automáticamente por `pre-push`. |
 | **`harness/scripts/save-memory.py`** | **Persistencia de conocimiento.** Agrega un registro a `details.jsonl` y una fila al `index.md`. El siguiente ID es `max(historial, índice) + 1`, a prueba de JSONL corrupto o ediciones manuales. Escapa pipes para conservar la tabla Markdown válida. |
 | **`harness/scripts/get-memory.py`** | **Recuperador de contexto JIT.** Consulta el contexto y la solución de un registro por su ID (`python harness/scripts/get-memory.py MEM-001`) sin cargar todo el historial al contexto del LLM. |
 
@@ -222,3 +224,40 @@ Git no rastrea directorios vacíos. Para garantizar que la arquitectura de carpe
   ```bash
   git add -A && git commit -m "chore(specs): archivar 001-<nombre>"
   ```
+
+---
+
+## 4. Integración en CI/CD Empresarial (Azure DevOps / GitHub Actions / GitLab)
+
+En organizaciones donde la rama principal (`main` o `master`) tiene políticas de protección estrictas y solo se permite integración mediante **Pull Requests con aprobación previa**, el script `rebase-spec.py` se traslada de forma natural y transparente al pipeline de CI/CD del PR:
+
+### Escenario de Concurrencia en PRs:
+Si dos desarrolladores subieron ramas en paralelo (`R1` y `R2`) con el mismo ID (ej. `022`), y el PR de `R1` es aprobado y mergeado primero:
+1. El pipeline de validación de `R2` se dispara automáticamente en el servidor.
+2. Ejecuta `python harness/scripts/rebase-spec.py`.
+3. Detecta que `022` ya fue absorbido por `main`, renombra la spec a `023`, actualiza `spec.md`, crea el commit y lo empuja de vuelta a la rama del PR de forma autónoma.
+
+### Ejemplo de Configuración para Azure DevOps (`azure-pipelines.yml`):
+```yaml
+steps:
+- checkout: self
+  fetchDepth: 0
+  persistCredentials: true # Permite al pipeline actualizar la rama del PR
+
+- script: |
+    # 1. Resolver colisiones de specs automáticamente
+    python harness/scripts/rebase-spec.py
+    
+    # 2. Si se generó un commit de renumeración, subirlo a la rama del PR
+    if [ $(git rev-parse HEAD) != $(git rev-parse origin/$(System.PullRequest.SourceBranch)) ]; then
+      echo "🔄 Subiendo ajuste de ID a $(System.PullRequest.SourceBranch)..."
+      git push origin HEAD:$(System.PullRequest.SourceBranch)
+    fi
+    
+    # 3. Correr suite completa de verificación
+    python harness/scripts/verify.py
+  displayName: 'Validación del Arnés y Auto-Rebase de Specs'
+```
+
+> **Nota:** Si la política corporativa prohíbe que el bot escriba en la rama y prefieres que solo bloquee el merge e informe al desarrollador, invoca el script con la bandera de solo chequeo: `python harness/scripts/rebase-spec.py --check`.
+

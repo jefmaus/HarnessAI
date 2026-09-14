@@ -97,17 +97,19 @@ Ejecuta en la terminal del sistema:
 ```bash
 git config core.hooksPath harness/.githooks
 ```
-*(Nota: En sistemas Unix/Linux/macOS, otorga permisos al hook si es necesario: `chmod +x harness/.githooks/pre-commit`).*
+*(Nota: En sistemas Unix/Linux/macOS, otorga permisos a los hooks si es necesario: `chmod +x harness/.githooks/*`).*
 
 ### 4. Prueba de Sanidad del Pipeline
 Ejecuta (usa `py -3` en lugar de `python` si tu sistema solo expone el lanzador de Windows):
 ```bash
 python harness/scripts/verify.py
 python harness/scripts/secret-scan.py
+python harness/scripts/rebase-spec.py
 git config core.hooksPath
 ```
 * `verify.py` debe reportar los módulos registrados en verde.
 * `secret-scan.py` debe salir en `0` con el staging limpio (confirma que la barrera de credenciales está operativa).
-* `git config core.hooksPath` debe devolver exactamente `harness/.githooks`; si está vacío, el hook **no** está activo (recuerda que esta config no viaja con `git clone`).
+* `rebase-spec.py` debe salir en `0` confirmando sincronización con la rama remota base.
+* `git config core.hooksPath` debe devolver exactamente `harness/.githooks`; si está vacío, los hooks **no** están activos (recuerda que esta config no viaja con `git clone`).
 
 Si todo concluye correctamente, confirma al usuario que el arnés está 100% operativo y listo para co-crear la primera especificación con `harness/specs/TEMPLATE.md`.
