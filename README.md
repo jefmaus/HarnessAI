@@ -1,6 +1,6 @@
 # Proyecto con Arnés de Desarrollo Determinista (SDD + TDD)
 
-Este repositorio está preparado para construir software de alta fidelidad asistido por agentes de inteligencia artificial (LLMs), implementando **Spec Driven Development (SDD)** y **TDD estricto**, garantizando que el agente nunca sufra de deriva de contexto (*context drift*) ni genere regresiones silenciosas.
+Este repositorio está preparado para construir software de alta fidelidad asistido por agentes de inteligencia artificial (LLMs), implementando **Spec Driven Development (SDD)** y **TDD estricto**, garantizando que el agente nunca sufra de deriva de contexto (*context drift*) ni genere regresiones silenciosas. Cuenta con soporte nativo para entornos concurrentes con múltiples desarrolladores (resolución de colisiones de specs en pre-push / CI y memoria técnica append-only sin conflictos vía `merge=union`).
 
 Todo el mecanismo de control, especificaciones, memoria técnica y scripts de automatización se encuentra **completamente aislado en la carpeta `harness/`**, dejando la raíz del proyecto limpia para el código fuente de tu aplicación (monolito, microservicios o monorepo con frontend).
 

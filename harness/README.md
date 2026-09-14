@@ -23,7 +23,8 @@ Este arnés elimina esa fragilidad mediante una premisa fundamental: **la verdad
   Las políticas no son sugerencias textuales; son frenos de ejecución en el sistema operativo. Un commit es bloqueado de inmediato por Git (`harness/.githooks/pre-commit`) si detecta credenciales o si el runner universal `python harness/scripts/verify.py` reporta cualquier advertencia de linter, fallo de compilación o test roto. El uso del flag `--no-verify` está vetado por constitución.
 
 * **Memoria Técnica Quirúrgica JIT (Just-In-Time Architecture Records):**  
-  Para evitar sobrecargar el contexto con historiales extensos o archivos de decisiones masivos, el sistema desacopla la memoria en un índice ligero (`harness/memory/index.md`) y un almacén detallado (`harness/memory/details.jsonl`), permitiendo al agente consultar o registrar decisiones de diseño (ADRs) y soluciones no triviales bajo demanda mediante scripts deterministas en Python.
+  Para evitar sobrecargar el contexto con historiales extensos o archivos de decisiones masivos, el sistema desacopla la memoria en un índice ligero autogenerado (`harness/memory/index.md`) y un almacén estructurado (`harness/memory/details.jsonl`). Para prevenir conflictos de Git en equipos concurrentes, `details.jsonl` utiliza la estrategia `merge=union` (append-only nativo) e `index.md` se reconstruye deterministamente sin colisiones. Permite al agente consultar o registrar decisiones de diseño (ADRs) bajo demanda mediante scripts deterministas en Python.
+
 
 ---
 
@@ -128,7 +129,7 @@ El sistema utiliza el principio de **foco de contexto único**: el modelo no deb
 | **`harness/scripts/activate-spec.py`** | **Activador de la máquina de estados.** Traslada la spec del backlog a `active/` garantizando físicamente la regla 'Single-Task Focus' y escribiendo la cabecera `> Feature:` en `tasks.md`. |
 | **`harness/scripts/finish-feature.py`** | **Comando de entrega y cierre.** Exige el vínculo `> Feature:` coherente con la carpeta activa, rechaza `tasks.md` en reposo o con tareas pendientes/in-en-progreso (casillas en viñetas o listas numeradas), corre la suite completa, traslada la carpeta a `harness/specs/done/` (previniendo colisiones) y restaura `tasks.md`. Luego commitea el archivado. |
 | **`harness/scripts/rebase-spec.py`** | **Sincronizador multi-desarrollador.** Detecta y resuelve colisiones de IDs entre la rama de trabajo y `origin/main`. Renumera carpetas de specs (en `active/`, `done/` o `backlog/`), actualiza encabezados y crea el commit de ajuste de forma determinista. Invocado automáticamente por `pre-push`. |
-| **`harness/scripts/save-memory.py`** | **Persistencia de conocimiento.** Agrega un registro a `details.jsonl` y una fila al `index.md`. El siguiente ID es `max(historial, índice) + 1`, a prueba de JSONL corrupto o ediciones manuales. Escapa pipes para conservar la tabla Markdown válida. |
+| **`harness/scripts/save-memory.py`** | **Persistencia de conocimiento.** Agrega un registro a `details.jsonl` y regenera automáticamente `index.md`. Soporta `--reindex` para normalizar IDs duplicados tras merges de Git y reconstruir la tabla Markdown deterministamente. |
 | **`harness/scripts/get-memory.py`** | **Recuperador de contexto JIT.** Consulta el contexto y la solución de un registro por su ID (`python harness/scripts/get-memory.py MEM-001`) sin cargar todo el historial al contexto del LLM. |
 
 ---
@@ -137,8 +138,8 @@ El sistema utiliza el principio de **foco de contexto único**: el modelo no deb
 
 | Archivo | Propósito Operativo |
 | :--- | :--- |
-| **`harness/memory/index.md`** | **Índice ligero de consulta.** Tabla en Markdown visible para el agente con el listado de IDs, fechas, módulos y títulos breves de decisiones arquitectónicas previas. Consume un mínimo de tokens. |
-| **`harness/memory/details.jsonl`** | **Registro profundo.** Almacén en formato JSON Lines que guarda el contexto completo y las resoluciones técnicas asociadas a cada ID de memoria. Solo se consulta puntualmente mediante `get-memory.py`. |
+| **`harness/memory/index.md`** | **Índice ligero de consulta (Autogenerado).** Tabla en Markdown generada a partir de `details.jsonl`. Proporciona visibilidad inmediata de IDs, fechas, módulos y títulos breves sin riesgo de conflictos de merge en Git. |
+| **`harness/memory/details.jsonl`** | **Registro profundo estructurado.** Almacén en formato JSON Lines que guarda el contexto completo y las resoluciones técnicas. Configurado con `merge=union` en `.gitattributes` para soportar adiciones concurrentes de múltiples desarrolladores sin bloqueos. Solo se consulta puntualmente mediante `get-memory.py`. |
 
 ---
 
@@ -202,9 +203,14 @@ Git no rastrea directorios vacíos. Para garantizar que la arquitectura de carpe
   ```bash
   python harness/scripts/save-memory.py "auth" "Uso de Argon2id" "Seguridad y rendimiento" "Configuración con memoria de 64MB y factor de costo 3"
   ```
+  *(El script actualiza `details.jsonl` y regenera `index.md` automáticamente sin riesgo de conflictos en Git).*
 * Podrás consultarlo en cualquier momento con:
   ```bash
   python harness/scripts/get-memory.py MEM-001
+  ```
+* Si tras un merge o rebase necesitas regenerar o normalizar el índice tabular:
+  ```bash
+  python harness/scripts/save-memory.py --reindex
   ```
 
 ### 6. Hacer commits frecuentes:

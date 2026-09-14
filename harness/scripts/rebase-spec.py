@@ -127,6 +127,13 @@ def get_local_specs():
     return local
 
 
+def sync_memory():
+    """Ejecuta la normalización y reconstrucción del índice de memoria técnica."""
+    save_mem = HARNESS_DIR / "scripts" / "save-memory.py"
+    if save_mem.is_file():
+        subprocess.run([sys.executable, str(save_mem), "--reindex"], capture_output=True, text=True, cwd=str(ROOT_DIR))
+
+
 def renumber_spec(spec, new_id):
     """Renombra la carpeta de la spec, actualiza spec.md y tasks.md."""
     old_name = spec["name"]
@@ -257,12 +264,15 @@ def main():
         all_taken_ids.add(next_id)
         next_id += 1
 
-    # 8. Commitear ajuste en Git
+    # 8. Sincronizar memoria técnica y commitear ajuste en Git
+    sync_memory()
     for old_name, new_name, old_path, new_path, _ in renamed_items:
         run_git(["add", str(new_path)])
         run_git(["add", "-u", str(old_path)])
     if TASKS_FILE.is_file():
         run_git(["add", str(TASKS_FILE)])
+    run_git(["add", str(HARNESS_DIR / "memory" / "details.jsonl")])
+    run_git(["add", str(HARNESS_DIR / "memory" / "index.md")])
 
     summary_renames = ", ".join(f"{o} -> {n}" for o, n, _, _, _ in renamed_items)
     commit_msg = f"chore(specs): auto-rebase spec IDs por colision con {remote_ref} ({summary_renames})"

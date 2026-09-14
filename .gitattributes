@@ -2,3 +2,8 @@
 # con CRLF el shebang/line-endings rompen el pre-commit en Linux/macOS.
 # Se usa el patron global (no el nombre exacto) para que cubra cualquier hook futuro.
 harness/.githooks/* text eol=lf
+
+# Estrategia append-only para memoria técnica sin conflictos de merge en Git:
+# Evita que Git genere marcas de conflicto (<<<<<<< HEAD) al concatenar registros concurrentes.
+harness/memory/details.jsonl merge=union
+

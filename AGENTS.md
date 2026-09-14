@@ -63,9 +63,11 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 ## 4. Política de Memoria Técnica JIT (`harness/memory/`)
 * **Qué se guarda:** Decisiones de arquitectura estructurales (ADRs), trampas sutiles de dependencias y soluciones a errores no triviales del entorno.
 * **Qué NO se guarda:** Diffs de código, tareas rutinarias, bitácoras de conversación o explicaciones que Git ya preserva en el historial de commits.
+* **Integridad Concurrente:** `harness/memory/details.jsonl` está configurado con `merge=union` en `.gitattributes` para permitir adiciones concurrentes sin conflictos en Git. La tabla `harness/memory/index.md` es autogenerada deterministamente a partir del JSONL para evitar desalineaciones en ramas paralelas.
 * **Comandos:**
   * Consultar un registro por ID: `python harness/scripts/get-memory.py <ID>`
   * Registrar nuevo conocimiento: `python harness/scripts/save-memory.py "<modulo>" "<titulo>" "<contexto>" "<decision_o_solucion>"`
+  * Reconstruir / normalizar índice: `python harness/scripts/save-memory.py --reindex`
 
 ---
 
