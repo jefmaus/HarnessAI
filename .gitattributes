@@ -1,6 +1,4 @@
-# El hook bash DEBE conservar saltos LF en cualquier SO:
+# Los hooks bash DEBEN conservar saltos LF en cualquier SO:
 # con CRLF el shebang/line-endings rompen el pre-commit en Linux/macOS.
-harness/.githooks/pre-commit text eol=lf
-
-# Los scripts Python se invocan via `python script.py`: LF estable para diffs limpios.
-*.py text eol=lf
+# Se usa el patron global (no el nombre exacto) para que cubra cualquier hook futuro.
+harness/.githooks/* text eol=lf

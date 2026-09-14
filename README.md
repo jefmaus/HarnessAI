@@ -6,6 +6,14 @@ Todo el mecanismo de control, especificaciones, memoria técnica y scripts de au
 
 ---
 
+> [!IMPORTANT]
+> **Al clonar este repositorio en una nueva máquina:**  
+> Git no sincroniza hooks locales por motivos de seguridad nativos. Si vas a trabajar en la terminal de forma manual (sin agente de IA), ejecuta una única vez:
+> ```bash
+> git config core.hooksPath harness/.githooks
+> ```
+> *(Nota: Si operas mediante un agente de IA, este verifica y activa la barrera de forma automática al iniciar sesión según `AGENTS.md`).*
+
 ## 🚀 Inicio Rápido en 3 Pasos
 
 ### 1. Inicializar el Proyecto
