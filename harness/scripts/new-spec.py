@@ -51,12 +51,10 @@ SKELETON = """#{heading}
 [Redactar la variante aplicable segun harness/specs/TEMPLATE.md (A-I):
 APIs, CLIs, librerias, UI, batch/crons, colas/eventos, bugfix, refactor o migracion.]
 
-## 2.5. Principios SOLID Aplicados
-* **S:** [Responsabilidad unica]
-* **O:** [Abierto/cerrado]
-* **L:** [Sustitucion de Liskov]
-* **I:** [Segregacion de interfaces]
-* **D:** [Inversion de dependencias]
+## 2.5. Consideraciones de Diseño y Rendimiento (Opcional)
+<!-- Justificar trade-offs de rendimiento y simplicidad (KISS/YAGNI); buenas practicas como SOLID solo si aplican -->
+* **Simplicidad y Performance:** [N/A - Diseno directo / Como se evita sobreingenieria y se cuida el rendimiento]
+* **Principios Aplicados:** [Heuristicas de diseno o modularidad aplicadas solo si aportan valor real]
 
 ## 3. Criterios de Aceptacion (Inmutables)
 * **CA-1:** [Condicion inicial] -> [Accion] -> [Resultado verificable] (indicar el comando que lo certifica)

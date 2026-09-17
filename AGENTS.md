@@ -58,13 +58,13 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 2. **Desglose de Tareas:** `tasks.md` ya debe estar vinculado a la feature activa (cabecera `> Feature:` escrita por `activate-spec.py`). Desglosa la spec en `harness/specs/tasks.md` en micro-tareas atómicas y manejables (típicamente entre 3 y 12 según la complejidad, sin límite rígido), donde cada tarea represente un ciclo TDD verificable.
 3. **Selección:** Toma la siguiente tarea y márcala en progreso con `[-]`. Solo puede haber una tarea en `[-]` a la vez.
 4. **Fase Roja + Diseño Inicial:**
-   * Define interfaces mínimas y abstracciones aplicando principios SOLID antes de escribir el test.
+   * Diseña la solución priorizando simplicidad (KISS) y rendimiento. Evita abstracciones prematuras o interfaces artificiales; aplica principios de diseño como SOLID solo como una sugerencia de buena práctica cuando aporte modularidad real sin añadir sobreingeniería ni comprometer el desempeño de la aplicación.
    * **Estrategia Dedicada:** Escribe la prueba unitaria en el directorio de tests del módulo (ej. `services/auth/tests/`).
    * **Estrategia Colocalizada:** Escribe la prueba adyacente a la unidad de código (ej. `src/app/login/login.component.spec.ts` antes de `login.component.ts`).
    * **Estrategia Ninguna:** Si y solo si la spec declara explícitamente `Estrategia de Tests: Ninguna` (ej. maquetación visual), omite la prueba y documenta el motivo.
    * Ejecuta `python harness/scripts/verify.py <modulo>` y confirma que falle por la razón esperada.
-5. **Fase Verde:** Escribe el código mínimo necesario en producción para que el test pase, aplicando estrictamente los principios SOLID y patrones de diseño acordes a la arquitectura del módulo. El agente debe proponer invariantes técnicas y debatear trade-offs con el usuario.
-6. **Fase Refactor:** Limpia y optimiza manteniendo `python harness/scripts/verify.py <modulo>` en verde (`exit 0`). El código debe preservar coherencia con la arquitectura declarada y los principios SOLID.
+5. **Fase Verde:** Escribe el código mínimo y directo necesario en producción para que el test pase (YAGNI/KISS). Mantén estructuras de datos y algoritmos eficientes en rendimiento y memoria. El agente debe proponer invariantes técnicas y debatir trade-offs de arquitectura o performance con el usuario.
+6. **Fase Refactor:** Limpia, simplifica y optimiza el rendimiento manteniendo `python harness/scripts/verify.py <modulo>` en verde (`exit 0`). Elimina duplicidades o indirecciones innecesarias; el código debe preservar coherencia con la arquitectura declarada sin tolerar complejidad accidental.
 7. **Completado:** Marca la micro-tarea con `[x]` en `harness/specs/tasks.md`.
 8. **Commit:** Realiza un commit local describiendo la micro-tarea (Git disparará el pre-commit automáticamente).
 9. **Cierre de Feature:** Cuando todas las micro-tareas de `tasks.md` estén marcadas con `[x]`, ejecuta:

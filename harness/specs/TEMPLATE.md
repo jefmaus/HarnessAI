@@ -22,7 +22,7 @@ python harness/scripts/new-spec.py <slug> [--title "Nombre descriptivo"]
 El agente consulta la topología registrada en `AGENTS.md` o `harness/config.json` y acuerda con el usuario:
 1. **Módulo(s) Objetivo:** ¿A qué servicio(s) o componente(s) aplica la spec? (Ej: `core`, `api`, `frontend`, o combinación en monorepos).
 2. **Arquitectura del Módulo:**
-   * Si el módulo ya existe: el agente adopta la arquitectura declarada y los principios SOLID para guiar la solución técnica.
+   * Si el módulo ya existe: el agente adopta la arquitectura declarada, priorizando simplicidad y rendimiento, aplicando principios de diseño (como SOLID, KISS o YAGNI) de forma pragmática según el contexto.
    * Si da origen a un nuevo microservicio: el agente propone su arquitectura (Clean, Hexagonal, Layered, etc.) y filosofía de diseño, validando con el usuario antes de materializar el archivo.
 3. **Estrategia de Tests:**
    * **Dedicada:** Tests en una carpeta específica (ej: `<modulo>/tests/` o `tests/unit/`).
@@ -47,17 +47,15 @@ El agente **NO asume ni inventa** reglas ni alcance por su cuenta. Identifica el
    * **Refactor / Optimización:** Pregunta qué cuello de botella o deuda técnica se busca resolver, qué interfaces públicas deben permanecer inalteradas (compatibilidad retroactiva) y qué métrica o SLA se espera mejorar.
    * **Migración de Base de Datos:** Pregunta el esquema actual, cambios requeridos en modelos/tablas y estrategia de retrocompatibilidad/rollback.
 
-### Paso 3.5: Principios de Diseño SOLID (Antes de los Detalles Técnicos)
-Antes de proponer contratos, el agente debe guiar el diseño aplicando principios SOLID desde el inicio:
-* **S (Responsabilidad Única):** Qué entidad/service se encarga de qué responsabilidad concreta.
-* **O (Abierto/Cerrado):** Cómo el diseño permite extensión sin modificación.
-* **L (Sustitución de Liskov):** Si hay herencia, cómo se preservan invariantes.
-* **I (Segregación de Interfaces):** Interfaces mínimas y específicas.
-* **D (Inversión de Dependencias):** Qué abstracciones se inyectan, decoupling del framework.
+### Paso 3.5: Criterio de Diseño, Simplicidad y Rendimiento (Diseño Pragmático)
+Antes de proponer contratos, el agente evalúa la solución bajo un enfoque de ingeniería pragmática:
+* **Simplicidad (KISS / YAGNI):** Diseñar la solución más directa y comprensible posible. No introducir capas intermedias, interfaces o abstracciones para casos hipotéticos futuros.
+* **Impacto en Rendimiento:** Asegurar que la estructura propuesta no agregue indirecciones innecesarias, llamadas costosas ni sobrecarga de memoria en rutas críticas.
+* **SOLID como Guía Opcional (No Dogmática):** Si la modularidad del componente realmente lo amerita (y sin penalizar el rendimiento), evaluar principios pertinentes (ej. Responsabilidad Única para no sobrecargar módulos, o Inversión de Dependencias para facilitar testing). No forzar el desglose de los 5 principios si la tarea no lo requiere.
 
 ### Paso 4: Propuesta de Contratos Técnicos o Invariantes (En el Chat)
 Con base en las respuestas, el agente redacta y presenta en el chat la propuesta técnica adecuada a la naturaleza del trabajo (¡NO inventar APIs ni códigos HTTP si no aplican!):
-* **Principios de Diseño:** La propuesta técnica debe respetar los patrones propios del estilo arquitectónico del módulo y aplicar estrictamente los principios SOLID.
+* **Criterio de Diseño:** La propuesta técnica debe respetar la arquitectura del módulo, priorizando código simple, legible y de alto rendimiento (KISS/YAGNI). Los principios de diseño (como SOLID) se aplican solo como sugerencias de buenas prácticas donde aporten valor real.
 * **Para APIs / Servicios Web:** Métodos, endpoints, payloads de request, respuestas exitosas y códigos de error (ej. 200, 201, 400, 401, 409).
 * **Para Interfaces UI / Frontend:** Vistas/componentes, inputs/props, eventos/outputs, estados visuales (`idle`, `submitting`, `success`, `error`).
 * **Para Procesos Batch / Crons:** Trigger/expresión cron, query o filtro de selección de lote, mutaciones en base de datos/archivos, reporte/telemetría de ejecución e idempotencia.
@@ -246,12 +244,10 @@ ALTER TABLE entities DROP COLUMN status_code;
 
 ---
 
-## 2.5. Principios SOLID Aplicados en el Diseño
-* **S (Responsabilidad Única):** [Qué entidad/service asume qué responsabilidad unívoca]
-* **O (Abierto/Cerrado):** [Cómo se permite extensión sin modificación]
-* **L (Sustitución de Liskov):** [Cómo se preservan invariantes en herencia/polimorfismo]
-* **I (Segregación de Interfaces):** [Interfaces mínimas y específicas]
-* **D (Inversión de Dependencias):** [Abstracciones inyectadas, decoupling del framework]
+## 2.5. Consideraciones de Diseño y Rendimiento (Opcional)
+<!-- Rellenar únicamente si amerita justificar trade-offs de arquitectura, simplicidad o rendimiento; omitir o indicar 'N/A' en tareas directas -->
+* **Simplicidad y Performance:** [Cómo se evita la sobreingeniería y se cuida el rendimiento / N/A - Diseño directo]
+* **Principios de Diseño (si aplica):** [Buenas prácticas o heurísticas aplicadas (ej. modularidad, desacoplamiento o SOLID) solo si aportan valor real sin penalizar performance]
 
 ## 3. Criterios de Aceptación (Inmutables)
 * **CA-1:** [Condición inicial / Entrada / Trigger] -> [Acción disparada] -> [Resultado esperado verificable]. *Verifica con:* `[comando exacto]`.
