@@ -28,6 +28,13 @@ El agente consulta la topología registrada en `AGENTS.md` o `harness/config.jso
 
 ### Paso 3: Diálogo de Alcance y Requisitos (Adaptativo según el Tipo de Tarea)
 El agente **NO asume ni inventa** reglas ni alcance por su cuenta. Identifica el tipo de tarea y entrevista al desarrollador en el chat:
+
+0. **Alineación Estratégica con la Visión 360° (Mandatoria):**
+   Antes de entrar en detalles de pantallas o código, el agente consulta `AGENTS.md` (Sección 1) y valida con el desarrollador:
+   * **Contribución al Valor:** ¿Cómo contribuye esta spec al **Propósito General** de la aplicación?
+   * **Control de Alcance:** ¿La funcionalidad está dentro de los límites **In-Scope** o roza aspectos catalogados como **Out-of-Scope**? (Si amplía el alcance o introduce dependencias no contempladas, exige confirmación explícita del usuario).
+   * **Lenguaje Ubicuo:** ¿Qué entidades troncales del dominio se ven involucradas o enriquecidas?
+
 1. **Nombre y Slug propuesto:** Sugiere el formato `XXX-<nombre-corto>`.
 2. **Tipo de Tarea:**
    * **Feature / Nueva Funcionalidad:** Pregunta qué flujos, pantallas, campos, opciones y reglas de negocio requiere.
@@ -95,6 +102,7 @@ Todo archivo creado dentro de `harness/specs/backlog/<ID>-<slug>/spec.md` debe r
 
 ## 1. Requisitos y Contexto
 <!-- Explicación concisa y unívoca según el tipo de tarea -->
+* **Objetivo de Negocio / Valor Aportado:** [Explicación concisa de cómo esta spec contribuye a la visión del producto y qué dolor resuelve al usuario o al sistema].
 * [Regla o Comportamiento esperado 1].
 * [Regla 2: Restricciones operativas, límites, expiraciones o formatos].
 * [Regla 3: Comportamiento ante fallos, entradas anómalas o condiciones de carrera].

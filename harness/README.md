@@ -10,6 +10,9 @@ Este arnés elimina esa fragilidad mediante una premisa fundamental: **la verdad
 
 ### Principios Fundamentales del Sistema
 
+* **Alineación de Producto y Prevención de Product Drift (Visión 360°):**  
+  La excelencia técnica y el TDD determinista son insuficientes si el agente construye con perfección técnica la solución equivocada. El arnés ancla permanentemente la estrella polar del proyecto (`AGENTS.md` Sección 1 y `harness/config.json` `product_context`): propósito general, usuarios objetivo, entidades del lenguaje ubicuo y fronteras de alcance (*In-Scope* vs *Out-of-Scope*). Toda especificación debe justificar su valor de negocio antes de ser aprobada, eliminando la miopía de túnel (*tunnel vision*) y la dispersión funcional (*feature creep*).
+
 * **Aislamiento Físico de Contexto (Single-Task Focus):**  
   A través de una máquina de estados estricta basada en carpetas (`harness/specs/backlog/` $\rightarrow$ `harness/specs/active/` $\rightarrow$ `harness/specs/done/`), se garantiza que el agente solo pueda cargar en memoria la especificación activa y su buffer de micro-tareas (`harness/specs/tasks.md`). Esto reduce drásticamente el consumo innecesario de tokens y maximiza la precisión semántica al programar. Solo puede existir **una única feature activa a la vez**.
 
@@ -96,9 +99,9 @@ flowchart TD
 
 | Archivo | Propósito Operativo |
 | :--- | :--- |
-| **`AGENTS.md`** *(en raíz)* | **Constitución permanente del agente.** Punto de entrada que cualquier IA lee automáticamente al iniciar la sesión. Define el protocolo de arranque (`On-Wakeup Routine`), la topología de módulos, la máquina de estados SDD, el protocolo TDD adaptativo y la *deny-list* (acciones prohibidas, como usar `--no-verify`). |
-| **`harness/config.json`** | **Estado determinista estructurado.** Archivo legible por máquina que almacena el flag `"configured": true/false`, el catálogo de módulos, rutas de carpetas, estrategias de test y los comandos exactos de verificación (`lint`, `build`, `test`). Impide falsos positivos y permite a `verify.py` ejecutar pruebas de un solo módulo o de todo el proyecto. |
-| **`harness/SETUP_HARNESS.md`** | **Script de arranque asistido.** Cuestionario de 5 preguntas técnicas (topología, lenguajes, frameworks, estrategias de test y persistencia) para que el agente configure deterministamente `harness/config.json` y complete `AGENTS.md`. Configura los hooks de Git y valida la operatividad del sistema. |
+| **`AGENTS.md`** *(en raíz)* | **Constitución permanente del agente.** Punto de entrada que cualquier IA lee automáticamente al iniciar la sesión. Define el protocolo de arranque (`On-Wakeup Routine`), la **Visión del Producto y Dominio del Negocio (360°)**, la topología de módulos, la máquina de estados SDD, el protocolo TDD adaptativo y la *deny-list* (acciones prohibidas, como desviar el foco o usar `--no-verify`). |
+| **`harness/config.json`** | **Estado determinista estructurado.** Archivo legible por máquina que almacena el flag `"configured": true/false`, el contexto de producto (`product_context`: propósito, usuarios, entidades y límites de alcance), el catálogo de módulos, rutas de carpetas, estrategias de test y los comandos exactos de verificación (`lint`, `build`, `test`). Impide falsos positivos y permite a `verify.py` ejecutar pruebas de un solo módulo o de todo el proyecto. |
+| **`harness/SETUP_HARNESS.md`** | **Script de arranque asistido.** Cuestionario de visión de producto (Pregunta 0: propósito, usuarios, entidades troncales, límites de alcance) y 5 preguntas técnicas (topología, lenguajes, frameworks, estrategias de test y persistencia) para que el agente configure deterministamente `harness/config.json` y complete `AGENTS.md`. Configura los hooks de Git y valida la operatividad del sistema. |
 | **`harness/hook.md`** | **Contrato descriptivo del pre-commit.** Explica al LLM qué validaciones físicas hace el hook antes de cada commit para que no intente saltárselas y sepa cómo reaccionar y corregir ante un rechazo de Git. |
 
 ---

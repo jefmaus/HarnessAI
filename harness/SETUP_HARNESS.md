@@ -7,12 +7,30 @@ Tu objetivo como agente arquitecto es recopilar las respuestas técnicas del usu
 
 ---
 
-## Paso 1: Inspección Silenciosa y Cuestionario Técnico
+## Paso 1: Inspección Silenciosa, Visión 360° y Cuestionario Técnico
 
 ### A. Inspección Previa
 Antes de hacer preguntas, inspecciona la raíz y subcarpetas para detectar si ya existen archivos de configuración (`package.json`, `pom.xml`, `go.mod`, `pyproject.toml`, `Cargo.toml`, etc.). Si encuentras pistas claras, úsalas para sugerir respuestas pre-llenadas.
 
-### B. Cuestionario de 5 Preguntas al Usuario
+### B. Pregunta 0: Visión y Propósito del Producto (Visión 360°)
+Antes de indagar en stacks o carpetas, el agente debe comprender el qué y el porqué del software para evitar la "miopía de túnel" y la deriva de producto (*product drift*). Formula estas 4 preguntas clave de negocio:
+
+1. **Propósito General y Propuesta de Valor:**
+   ¿Cuál es el problema principal que resuelve la aplicación y cuál es su objetivo central de valor?
+
+2. **Usuarios Objetivo y Actores Clave:**
+   ¿Quiénes interactuarán con la aplicación (ej: clientes B2B, administradores, usuarios anónimos, servicios externos)?
+
+3. **Entidades Troncales (Lenguaje Ubicuo):**
+   ¿Cuáles son los 3 a 5 conceptos o entidades fundamentales del negocio (ej: `Organización`, `Factura`, `Suscripción`, `Ticket`)?
+
+4. **Límites de Alcance (In-Scope vs Out-of-Scope):**
+   * **In-Scope (Dentro):** ¿Qué capacidades o flujos forman parte central de la solución en esta etapa?
+   * **Out-of-Scope (Fuera):** ¿Qué aspectos, integraciones complejas o funciones quedan explícitamente excluidas para evitar dispersión (*feature creep*)?
+
+---
+
+### C. Cuestionario Técnico (5 Preguntas de Arquitectura y Stack)
 Formula las siguientes preguntas de forma concisa y espera las respuestas antes de modificar ningún archivo:
 
 1. **Topología del Repositorio:**
@@ -47,12 +65,20 @@ Formula las siguientes preguntas de forma concisa y espera las respuestas antes 
 Una vez que el usuario proporcione las respuestas:
 
 ### 1. Actualizar `harness/config.json`
-Escribe el archivo con `configured: true` y el catálogo de módulos configurados. Ejemplo de esquema:
+Escribe el archivo con `configured: true`, el bloque `product_context` de visión de producto y el catálogo de módulos técnicos. Ejemplo de esquema:
 ```json
 {
   "configured": true,
   "repository_type": "monorepo",
   "project_name": "Nombre del Proyecto",
+  "product_context": {
+    "tagline": "Plataforma de gestión de...",
+    "core_purpose": "Automatizar y centralizar el proceso de...",
+    "target_users": ["Administradores", "Clientes finales"],
+    "core_entities": ["Usuario", "Factura", "Organizacion"],
+    "in_scope": ["Autenticación JWT", "Emisión de facturas", "Panel web"],
+    "out_of_scope": ["Integración ERP SAP", "Facturación electrónica internacional"]
+  },
   "modules": [
     {
       "name": "auth-service",
@@ -83,7 +109,7 @@ Escribe el archivo con `configured: true` y el catálogo de módulos configurado
 ```
 
 ### 2. Actualizar la Constitución Central (`AGENTS.md`)
-Rellena la Sección 1 de `AGENTS.md` con la tabla de topología, lenguajes, estrategias de test y comandos de verificación acordados, manteniendo todas las reglas constitucionales intactas.
+Rellena la **Sección 1 (Visión del Producto y Dominio del Negocio)** con el propósito, usuarios, entidades y límites de alcance acordados, y la **Sección 2 (Topología del Proyecto y Stack Tecnológico)** con la tabla de módulos, lenguajes, estrategias de test y comandos de verificación, manteniendo todas las reglas constitucionales intactas.
 
 ### 2.5 Prueba en Seco Obligatoria de Cada Comando (Dry-Run)
 

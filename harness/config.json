@@ -2,5 +2,13 @@
   "configured": false,
   "repository_type": "single",
   "project_name": "Unconfigured Project",
+  "product_context": {
+    "tagline": "",
+    "core_purpose": "",
+    "target_users": [],
+    "core_entities": [],
+    "in_scope": [],
+    "out_of_scope": []
+  },
   "modules": []
 }
