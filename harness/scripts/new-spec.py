@@ -36,6 +36,7 @@ SKELETON = """#{heading}
 ## 0. Metadatos de la Spec
 * **Tipo de Tarea:** `[feature | bugfix | refactor | performance | batch_job | event_worker | db_migration]`
 * **Modulo Afectado:** `[nombre_modulo]`
+* **Arquitectura de Referencia:** `[clean_architecture | hexagonal | layered | feature_sliced | etc.]`
 * **Estrategia de Tests:** `[dedicated | co-located | none]`
 * **Ruta Base de Codigo:** `[ruta relativa]`
 * **Ubicacion de Tests:** `[ruta o patron, segun estrategia]`
@@ -49,6 +50,13 @@ SKELETON = """#{heading}
 ## 2. Contratos Tecnicos e Invariantes
 [Redactar la variante aplicable segun harness/specs/TEMPLATE.md (A-I):
 APIs, CLIs, librerias, UI, batch/crons, colas/eventos, bugfix, refactor o migracion.]
+
+## 2.5. Principios SOLID Aplicados
+* **S:** [Responsabilidad unica]
+* **O:** [Abierto/cerrado]
+* **L:** [Sustitucion de Liskov]
+* **I:** [Segregacion de interfaces]
+* **D:** [Inversion de dependencias]
 
 ## 3. Criterios de Aceptacion (Inmutables)
 * **CA-1:** [Condicion inicial] -> [Accion] -> [Resultado verificable] (indicar el comando que lo certifica)

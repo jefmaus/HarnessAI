@@ -33,10 +33,12 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 * **Tipo de Repositorio:** [Single / Monorepo / Multi-Servicio]
 * **Módulos Registrados:**
 
-| Módulo / Servicio | Ruta Base | Runtime / Framework | Estrategia de Tests | Comando Verificación |
-| :--- | :--- | :--- | :--- | :--- |
-| *[Ej. auth-service]* | `services/auth` | Python 3.12 / FastAPI | Dedicada (`services/auth/tests/`) | `python harness/scripts/verify.py auth-service` |
-| *[Ej. frontend]* | `frontend` | Angular 18 | Colocalizada (`*.spec.ts`) | `python harness/scripts/verify.py frontend` |
+| Módulo / Servicio | Ruta Base | Runtime / Framework | Arquitectura / Patrón | Estrategia de Tests | Comando Verificación |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| *[Ej. auth-service]* | `services/auth` | Python 3.12 / FastAPI | [clean_architecture \| hexagonal \| layered \| feature_sliced] | Dedicada (`services/auth/tests/`) | `python harness/scripts/verify.py auth-service` |
+| *[Ej. frontend]* | `frontend` | Angular 18 | [feature_sliced] | Colocalizada (`*.spec.ts`) | `python harness/scripts/verify.py frontend` |
+
+**Nota de Arquitectura Per-Componente:** Cada módulo registra su estilo arquitectónico y filosofía de diseño. El agente propone y justifica su elección, validando con el usuario antes de codificar. La arquitectura se define a nivel individual de módulo, permitiendo heterogeneidad (ej. un microservicio Clean Architecture y otro Hexagonal) sin afectar a componentes existentes.
 
 ---
 
@@ -52,16 +54,17 @@ Cada vez que el agente despierte o inicie una interacción en este repositorio:
 ---
 
 ## 4. Protocolo TDD Obligatorio y Adaptativo
-1. **Lectura Previa:** Lee `harness/specs/active/*/spec.md` y verifica el Módulo Afectado y su Estrategia de Tests.
+1. **Lectura Previa:** Lee `harness/specs/active/*/spec.md` y verifica el Módulo Afectado, su Arquitectura y su Estrategia de Tests.
 2. **Desglose de Tareas:** `tasks.md` ya debe estar vinculado a la feature activa (cabecera `> Feature:` escrita por `activate-spec.py`). Desglosa la spec en `harness/specs/tasks.md` en micro-tareas atómicas y manejables (típicamente entre 3 y 12 según la complejidad, sin límite rígido), donde cada tarea represente un ciclo TDD verificable.
 3. **Selección:** Toma la siguiente tarea y márcala en progreso con `[-]`. Solo puede haber una tarea en `[-]` a la vez.
-4. **Fase Roja (Según Estrategia del Módulo):**
+4. **Fase Roja + Diseño Inicial:**
+   * Define interfaces mínimas y abstracciones aplicando principios SOLID antes de escribir el test.
    * **Estrategia Dedicada:** Escribe la prueba unitaria en el directorio de tests del módulo (ej. `services/auth/tests/`).
    * **Estrategia Colocalizada:** Escribe la prueba adyacente a la unidad de código (ej. `src/app/login/login.component.spec.ts` antes de `login.component.ts`).
    * **Estrategia Ninguna:** Si y solo si la spec declara explícitamente `Estrategia de Tests: Ninguna` (ej. maquetación visual), omite la prueba y documenta el motivo.
    * Ejecuta `python harness/scripts/verify.py <modulo>` y confirma que falle por la razón esperada.
-5. **Fase Verde:** Escribe el código mínimo necesario en producción para que el test pase.
-6. **Fase Refactor:** Limpia y optimiza manteniendo `python harness/scripts/verify.py <modulo>` en verde (`exit 0`).
+5. **Fase Verde:** Escribe el código mínimo necesario en producción para que el test pase, aplicando estrictamente los principios SOLID y patrones de diseño acordes a la arquitectura del módulo. El agente debe proponer invariantes técnicas y debatear trade-offs con el usuario.
+6. **Fase Refactor:** Limpia y optimiza manteniendo `python harness/scripts/verify.py <modulo>` en verde (`exit 0`). El código debe preservar coherencia con la arquitectura declarada y los principios SOLID.
 7. **Completado:** Marca la micro-tarea con `[x]` en `harness/specs/tasks.md`.
 8. **Commit:** Realiza un commit local describiendo la micro-tarea (Git disparará el pre-commit automáticamente).
 9. **Cierre de Feature:** Cuando todas las micro-tareas de `tasks.md` estén marcadas con `[x]`, ejecuta:

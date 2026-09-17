@@ -37,9 +37,10 @@ Formula las siguientes preguntas de forma concisa y espera las respuestas antes 
    ¿El proyecto contendrá un único servicio/aplicación o será un monorepo / multi-módulo (ej: 2 microservicios, backend + frontend Angular, etc.)?
 
 2. **Módulos y Rutas:**
-   Para cada componente o módulo:
-   * Nombre del módulo y carpeta raíz (ej. `services/auth`, `services/billing`, `frontend`, o `.` si es raíz).
-   * Lenguaje, runtime y framework principal (ej. Python 3.12 / FastAPI, Java 21 / Spring Boot 3.3, TypeScript / Angular 18).
+    Para cada componente o módulo:
+    * Nombre del módulo y carpeta raíz (ej. `services/auth`, `services/billing`, `frontend`, o `.` si es raíz).
+    * Lenguaje, runtime y framework principal (ej. Python 3.12 / FastAPI, Java 21 / Spring Boot 3.3, TypeScript / Angular 18).
+    * **Estilo Arquitectónico y Filosofía de Diseño:** Propón y el agente justificará (ej. Clean Architecture con DDD, Hexagonal / Ports & Adapters, Por Capas / Layered, Event-Driven Worker, Feature-Sliced Design en frontend). Cada módulo puede tener un estilo distinto.
 
 3. **Estrategia y Ubicación de Pruebas:**
    Para cada módulo, define su estrategia:
@@ -84,6 +85,7 @@ Escribe el archivo con `configured: true`, el bloque `product_context` de visió
       "name": "auth-service",
       "path": "services/auth",
       "runtime": "Python 3.12 / FastAPI",
+      "architecture": "clean_architecture",
       "test_strategy": "dedicated",
       "test_path": "services/auth/tests",
       "commands": {
@@ -96,6 +98,7 @@ Escribe el archivo con `configured: true`, el bloque `product_context` de visió
       "name": "frontend",
       "path": "frontend",
       "runtime": "Angular 18",
+      "architecture": "feature_sliced",
       "test_strategy": "co-located",
       "test_path": "*.spec.ts",
       "commands": {
@@ -109,7 +112,10 @@ Escribe el archivo con `configured: true`, el bloque `product_context` de visió
 ```
 
 ### 2. Actualizar la Constitución Central (`AGENTS.md`)
-Rellena la **Sección 1 (Visión del Producto y Dominio del Negocio)** con el propósito, usuarios, entidades y límites de alcance acordados, y la **Sección 2 (Topología del Proyecto y Stack Tecnológico)** con la tabla de módulos, lenguajes, estrategias de test y comandos de verificación, manteniendo todas las reglas constitucionales intactas.
+Rellena la **Sección 1 (Visión del Producto y Dominio del Negocio)** con el propósito, usuarios, entidades y límites de alcance acordados, y la **Sección 2 (Topología del Proyecto y Stack Tecnológico)** con la tabla de módulos, lenguajes, arquitecturas, estrategias de test y comandos de verificación, manteniendo todas las reglas constitucionales intactas.
+
+### 2.5 Regla de Módulos Futuros (Desacoplamiento Dinámico)
+La arquitectura **nunca** se quema a nivel de repositorio completo. Si más adelante creas un 3er o 4to microservicio, no necesitas reconfigurar el proyecto. Al crear su primera spec, el agente detectará el nuevo componente, te preguntará su arquitectura particular y la registrará en `config.json` y `AGENTS.md`.
 
 ### 2.5 Prueba en Seco Obligatoria de Cada Comando (Dry-Run)
 

@@ -18,10 +18,13 @@ python harness/scripts/new-spec.py <slug> [--title "Nombre descriptivo"]
 3. **Rechaza en seco** slugs mal formados (deben ser `kebab-case`) e IDs numéricos duplicados entre carpetas; avisa de carpetas sin prefijo `NNN-` para que las renombres.
 4. Materializa el esqueleto de la spec **solo tras el CHECKPOINT** (ver abajo) con el campo de evidencia `Aprobada:`.
 
-### Paso 2: Asignación de Módulo / Servicio y Estrategia de Tests
+### Paso 2: Asignación de Módulo / Servicio, Arquitectura y Estrategia de Tests
 El agente consulta la topología registrada en `AGENTS.md` o `harness/config.json` y acuerda con el usuario:
 1. **Módulo(s) Objetivo:** ¿A qué servicio(s) o componente(s) aplica la spec? (Ej: `core`, `api`, `frontend`, o combinación en monorepos).
-2. **Estrategia de Tests:**
+2. **Arquitectura del Módulo:**
+   * Si el módulo ya existe: el agente adopta la arquitectura declarada y los principios SOLID para guiar la solución técnica.
+   * Si da origen a un nuevo microservicio: el agente propone su arquitectura (Clean, Hexagonal, Layered, etc.) y filosofía de diseño, validando con el usuario antes de materializar el archivo.
+3. **Estrategia de Tests:**
    * **Dedicada:** Tests en una carpeta específica (ej: `<modulo>/tests/` o `tests/unit/`).
    * **Colocalizada:** Tests adyacentes al código fuente (ej: `*.spec.ts`, `*_test.go`).
    * **Ninguna / Omitida:** Solo si se declara formalmente para prototipos o maquetación sin suite automatizada.
@@ -44,8 +47,17 @@ El agente **NO asume ni inventa** reglas ni alcance por su cuenta. Identifica el
    * **Refactor / Optimización:** Pregunta qué cuello de botella o deuda técnica se busca resolver, qué interfaces públicas deben permanecer inalteradas (compatibilidad retroactiva) y qué métrica o SLA se espera mejorar.
    * **Migración de Base de Datos:** Pregunta el esquema actual, cambios requeridos en modelos/tablas y estrategia de retrocompatibilidad/rollback.
 
+### Paso 3.5: Principios de Diseño SOLID (Antes de los Detalles Técnicos)
+Antes de proponer contratos, el agente debe guiar el diseño aplicando principios SOLID desde el inicio:
+* **S (Responsabilidad Única):** Qué entidad/service se encarga de qué responsabilidad concreta.
+* **O (Abierto/Cerrado):** Cómo el diseño permite extensión sin modificación.
+* **L (Sustitución de Liskov):** Si hay herencia, cómo se preservan invariantes.
+* **I (Segregación de Interfaces):** Interfaces mínimas y específicas.
+* **D (Inversión de Dependencias):** Qué abstracciones se inyectan, decoupling del framework.
+
 ### Paso 4: Propuesta de Contratos Técnicos o Invariantes (En el Chat)
 Con base en las respuestas, el agente redacta y presenta en el chat la propuesta técnica adecuada a la naturaleza del trabajo (¡NO inventar APIs ni códigos HTTP si no aplican!):
+* **Principios de Diseño:** La propuesta técnica debe respetar los patrones propios del estilo arquitectónico del módulo y aplicar estrictamente los principios SOLID.
 * **Para APIs / Servicios Web:** Métodos, endpoints, payloads de request, respuestas exitosas y códigos de error (ej. 200, 201, 400, 401, 409).
 * **Para Interfaces UI / Frontend:** Vistas/componentes, inputs/props, eventos/outputs, estados visuales (`idle`, `submitting`, `success`, `error`).
 * **Para Procesos Batch / Crons:** Trigger/expresión cron, query o filtro de selección de lote, mutaciones en base de datos/archivos, reporte/telemetría de ejecución e idempotencia.
@@ -95,6 +107,7 @@ Todo archivo creado dentro de `harness/specs/backlog/<ID>-<slug>/spec.md` debe r
 ## 0. Metadatos de la Spec
 * **Tipo de Tarea:** `[feature | bugfix | refactor | performance | batch_job | event_worker | db_migration]`
 * **Módulo Afectado:** `[nombre_modulo]` (ej. `core`, `api`, `frontend`, `global`)
+* **Arquitectura de Referencia:** `[clean_architecture | hexagonal | layered | feature_sliced | etc.]`
 * **Estrategia de Tests:** `[dedicated | co-located | none]` (acepta alias `dedicada | colocalizada | ninguna`)
 * **Ruta Base de Código:** `[ruta relativa]` (ej. `src/` o `<modulo>/src/`)
 * **Ubicación de Tests:** `[ruta o patrón]` (ej. `<modulo>/tests/` o `*.spec.ts colocalizado`)
@@ -232,6 +245,13 @@ ALTER TABLE entities DROP COLUMN status_code;
 - **Verificación de Integridad:** Consulta de verificación posterior para asegurar que ningún registro preexistente quedó en estado inconsistente.
 
 ---
+
+## 2.5. Principios SOLID Aplicados en el Diseño
+* **S (Responsabilidad Única):** [Qué entidad/service asume qué responsabilidad unívoca]
+* **O (Abierto/Cerrado):** [Cómo se permite extensión sin modificación]
+* **L (Sustitución de Liskov):** [Cómo se preservan invariantes en herencia/polimorfismo]
+* **I (Segregación de Interfaces):** [Interfaces mínimas y específicas]
+* **D (Inversión de Dependencias):** [Abstracciones inyectadas, decoupling del framework]
 
 ## 3. Criterios de Aceptación (Inmutables)
 * **CA-1:** [Condición inicial / Entrada / Trigger] -> [Acción disparada] -> [Resultado esperado verificable]. *Verifica con:* `[comando exacto]`.
