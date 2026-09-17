@@ -1,7 +1,8 @@
-# Contrato Operativo del Pre-Commit
+# Contrato Operativo de los Hooks de Git
 
-Este proyecto cuenta con una barrera física de validación configurada en `harness/.githooks/pre-commit`.
+Este proyecto cuenta con **dos** barreras físicas de validación configuradas en `harness/.githooks/`:
 
+## 1. Pre-Commit (`harness/.githooks/pre-commit`)
 El hook es un delegador delgado: localiza un intérprete Python disponible (en orden: `VIRTUAL_ENV`, lanzador `py -3` de Windows, `python3`, `python`) y delega dos validaciones deterministas, ambas en Python puro y sin dependencias externas:
 
 1. **Escaneo de Secretos (`harness/scripts/secret-scan.py`):**
@@ -10,6 +11,13 @@ El hook es un delegador delgado: localiza un intérprete Python disponible (en o
    - **Los borrados NUNCA se escanean** (`--diff-filter=ACM`): retirar un secreto comprometido con `git rm` debe poder commitearse sin violar la constitución.
 
 2. **Verificación de Calidad (`harness/scripts/verify.py`):** ejecuta linter, compilación/tipado y pruebas de cada módulo registrado en `harness/config.json`. Si algo falla o supera el timeout, el commit se aborta con código `1`.
+
+## 2. Pre-Push (`harness/.githooks/pre-push`)
+Valida colisiones de specs contra el repositorio remoto base antes de permitir el push:
+
+- **Sincronización de IDs:** si hay colisiones numéricas entre specs locales y `origin/main`, ejecuta `harness/scripts/rebase-spec.py` para renumerar deterministicamente y crear un commit de ajuste.
+- **Salta en borrados de rama:** si la operación es de borrado de rama remota, el hook se completa inmediatamente sin validar.
+- **Resuelve intéprete automáticamente:** mismo orden de prioridad que pre-commit (`VIRTUAL_ENV` → `py -3` → `python3` → `python`).
 
 ## Si el commit es rechazado
 
